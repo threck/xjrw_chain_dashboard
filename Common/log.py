@@ -14,7 +14,7 @@ LEVEL = dict(info=logging.INFO,
               error=logging.ERROR,
               debug=logging.DEBUG,
               critical=logging.CRITICAL)
-logging.basicConfig(level=LEVEL.get(level))
+# logging.basicConfig(level=LEVEL.get(level))
 
 logger = logging.getLogger()
 
