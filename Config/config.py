@@ -20,6 +20,9 @@ class Config(object):
     VALUE_ENVIRONMENT = "environment"
     VALUE_VERSION = "version"
     VALUE_HOST = "host"
+    VALUE_API_HOST = "apihost"
+    VALUE_WS_HOST = "wshost"
+    VALUE_MONGO_DB = "mongodb"
     # [mail]
     VALUE_SMTP_SERVER = "smtpserver"
     VALUE_SMTP_SERVER_PORT = "smtpserverport"
@@ -48,9 +51,12 @@ class Config(object):
         self.environment_test = self.get_conf(Config.TITLE_TEST, Config.VALUE_ENVIRONMENT)
         self.version_test = self.get_conf(Config.TITLE_TEST, Config.VALUE_VERSION)
         self.host_test = self.get_conf(Config.TITLE_TEST, Config.VALUE_HOST)
+        self.apihost_test = self.get_conf(Config.TITLE_TEST, Config.VALUE_API_HOST)
+        self.wshost_test = self.get_conf(Config.TITLE_TEST, Config.VALUE_WS_HOST)
+        self.mongodb_test = self.get_conf(Config.TITLE_TEST, Config.VALUE_MONGO_DB)
 
         self.smtpserver_email = self.get_conf(Config.TITLE_EMAIL, Config.VALUE_SMTP_SERVER)
-        self.smtpserverport_email = self.get_conf(Config.TITLE_EMAIL, Config.VALUE_SMTP_SERVER_PORT)
+        self.smtpserverport_email = int(self.get_conf(Config.TITLE_EMAIL, Config.VALUE_SMTP_SERVER_PORT))
         self.from_email = self.get_conf(Config.TITLE_EMAIL, Config.VALUE_FROM)
         self.to_email = self.get_conf(Config.TITLE_EMAIL, Config.VALUE_TO).split(';')
         self.username_email = self.get_conf(Config.TITLE_EMAIL, Config.VALUE_USERNAME)

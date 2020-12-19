@@ -7,7 +7,7 @@
 import pymongo
 
 # mg = 'mongodb://poolwebtest:xjrw2020@118.24.168.230:27017,118.24.168.230:27018,118.24.168.230:27019/poolwebtest'
-mg = 'mongodb://poolwebtest:xjrw2020@118.24.168.230:27017/poolwebtest'
+mg = 'mongodb://pynxtest:pynxtest@139.186.84.15:27987,139.186.84.15:27988,139.186.84.15:27989/pynxtest'
 # mg = 'mongodb://poolwebtest:xjrw2020@118.24.168.230:27018/poolwebtest‘
 # mg = 'mongodb://poolwebtest:xjrw2020@118.24.168.230:27019/poolwebtest’
 
@@ -51,6 +51,13 @@ my_result = mg_col.find(my_query).limit(3)
 for x in my_result:
     print('===', x)
     print('-->', x["_id"])
+print()
+
+# 不返回指定字段的记录
+my_query = {"_id": 0}
+my_result = mg_col.find({}, {"_id": 0}).limit(3)
+for x in my_result:
+    print('===', x)
 print()
 
 print(db_list)

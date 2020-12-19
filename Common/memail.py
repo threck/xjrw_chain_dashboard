@@ -88,36 +88,15 @@ class Email(object):
         self.__server.quit()
 
     def set_msg(self):
-        # 在发送HTML的同时再附加一个纯文本，如果收件人无法查看HTML格式的邮件，就可以自动降级查看纯文本邮件。
-        # 利用MIMEMultipart就可以组合一个HTML和Plain，要注意指定subtype是alternative
         msg = MIMEMultipart('alternative')
         msg['From'] = self._format_addr('Python developer <%s>' % self.__from_addr)
-        msg['To'] = self._format_addr('administrator <%s>' % ','.join(self.__to_addr))  # msg['To']接收的是字符串而不是list，如果有多个邮件地址，用,分隔即可
+        msg['To'] = self._format_addr('administrator <%s>' % ','.join(self.__to_addr))
         msg['Subject'] = Header('A test python email', 'utf-8').encode()
 
-        # 邮件正文是MIMEText
-        msg_plain = MIMEText('hello, send by Python ...', 'plain', 'utf-8')
-
-        # 添加附件就是加上一个MIMEBase，从本地读取一个图片:
-        with open('H:\\media\\files\\wx_camera_1566864040835.jpg', 'rb') as f:
-            msg_base = MIMEBase('image', 'jpg', filename='test_imag.jpg')  # 设置附件的MIME和文件名，这里是png类型
-            msg_base.add_header('Content-Disposition', 'attachment', filename='test_imag.jpg')  # 加上必要的头信息
-            msg_base.add_header('Content-ID', '<0>')
-            msg_base.add_header('X-Attachment-Id', '0')
-            msg_base.set_payload(f.read())  # 把附件的内容读进来
-            encoders.encode_base64(msg_base)  # 用Base64编码
-
-        # 邮件正文是MIMEText
-        # 在HTML中通过引用src="cid:0"就可以把附件作为图片嵌入
-        # 如果有多个图片，给它们依次编号，然后引用不同的cid:x即可
-        msg_html = MIMEText('<html><body><h1>Hello</h1>' +
-                            '<p>send by <a href="http://www.python.org">Python</a>...</p>' +
-                            # '<p><img src="cid:0"></p>' +
-                            '</body></html>', 'html', 'utf-8')
+        # 邮件正文
+        msg_plain = MIMEText('api test email', 'plain', 'utf-8')
 
         msg.attach(msg_plain)
-        msg.attach(msg_base)
-        msg.attach(msg_html)
         return msg
 
     # 函数_format_addr()格式化一个邮件地址。注意不能简单地传入name <addr@example.com>，因为如果包含中文，需要通过Header对象进行编码

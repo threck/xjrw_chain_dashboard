@@ -1,2 +1,8 @@
+Report
+Log
+params
+other
 .idea
 *.pyc
+*.log
+mongo_test.py

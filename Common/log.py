@@ -6,16 +6,16 @@
 
 import os
 import logging
-import time
+from . import common
+from . import consts
 
-level = 'info'
+level = 'debug'
 LEVEL = dict(info=logging.INFO,
               warning=logging.WARNING,
               error=logging.ERROR,
               debug=logging.DEBUG,
               critical=logging.CRITICAL)
-# logging.basicConfig(level=LEVEL.get(level))
-
+logging.basicConfig(level=LEVEL.get(level))
 logger = logging.getLogger()
 
 
@@ -27,12 +27,22 @@ def create_log_file(log_file):
         pass
 
 
-class Log(object):
-    time_format = '%Y-%m-%d %H:%M:%S'
+def set_log_handler(level):
+    if level == 'error':
+        logger.addHandler(Log.log_file_handler_err)
+    logger.addHandler(Log.log_file_handler)
 
+def remove_log_handler(level):
+    if level == 'error':
+        logger.removeHandle(Log.log_file_handler_err)
+    logger.removeHandler(Log.log_file_handler)
+
+
+
+class Log(object):
     path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    log_file = path + '/Log/log.log'
-    log_err_file = path + '/Log/err.log'
+    log_file = '%s/Log/%slog.log' % (path, common.current_time(consts.TIME_FORMAT_FILE))
+    log_err_file = '%s/Log/%serr.log' % (path, common.current_time(consts.TIME_FORMAT_FILE))
     log_file_handler = logging.FileHandler(log_file, encoding='utf-8')
     log_file_handler_err = logging.FileHandler(log_err_file, encoding='utf-8')
 
@@ -40,51 +50,43 @@ class Log(object):
     create_log_file(log_file)
     create_log_file(log_err_file)
 
-    @staticmethod
-    def set_log_handler(level):
-        if level == 'error':
-            logger.addHandler(Log.log_file_handler_err)
-        logger.addHandler(Log.log_file_handler)
+    def __init__(self, type='log'):
+        self.type = type
 
-    @staticmethod
-    def remove_log_handler(level):
-        if level == 'error':
-            logger.removeHandler(Log.log_file_handler_err)
-        logger.removeHandler(Log.log_file_handler)
+    def info(self, log_str):
+        set_log_handler('info')
+        s = "\n[%s][%s][INFO] %s" % (common.current_time(), self.type, log_str)
+        logger.info(s)
+        remove_log_handler('info')
+        return s
 
-    @staticmethod
-    def current_time():
-        return time.strftime(Log.time_format, time.localtime())
+    def warning(self, log_str):
+        set_log_handler('warning')
+        s = "[%s][%s][WARNING] %s" % (common.current_time(), self.type, log_str)
+        logger.warning(s)
+        remove_log_handler('warning')
+        return s
 
-    @staticmethod
-    def info(log_str):
-        Log.set_log_handler('info')
-        logger.info("["+Log.current_time()+"][INFO] "+log_str)
-        Log.remove_log_handler('info')
+    def error(self, log_str):
+        set_log_handler('error')
+        s = "[%s][%s][ERROR] %s" % (common.current_time(), self.type, log_str)
+        logger.error(s)
+        remove_log_handler('error')
+        return s
 
-    @staticmethod
-    def warning(log_str):
-        Log.set_log_handler('warning')
-        logger.warning("["+Log.current_time()+"][WARNING] "+log_str)
-        Log.remove_log_handler('warning')
+    def debug(self, log_str):
+        set_log_handler('debug')
+        s = "[%s][%s][DEBUG] %s" % (common.current_time(), self.type, log_str)
+        logger.debug(s)
+        remove_log_handler('debug')
+        return s
 
-    @staticmethod
-    def error(log_str):
-        Log.set_log_handler('error')
-        logger.error("["+Log.current_time()+"][ERROR] "+log_str)
-        Log.remove_log_handler('error')
-
-    @staticmethod
-    def debug(log_str):
-        Log.set_log_handler('debug')
-        logger.debug("["+Log.current_time()+"][DEBUG] "+log_str)
-        Log.remove_log_handler('debug')
-
-    @staticmethod
-    def critical(log_str):
-        Log.set_log_handler('critical')
-        logger.critical("["+Log.current_time()+"][CRITICAL] "+log_str)
-        Log.remove_log_handler('critical')
+    def critical(self, log_str):
+        set_log_handler('critical')
+        s = "[%s][%s][CRITICAL] %s" % (common.current_time(), self.type, log_str)
+        logger.critical(s)
+        remove_log_handler('critical')
+        return s
 
 
 if __name__ == '__main__':
