@@ -4,7 +4,6 @@
 # @Date        : 2020/12/14 0014
 # @Description : xjrw_chain_dashboard
 
-
 import asyncio
 import websockets
 import socket
@@ -35,41 +34,43 @@ time_start = ''
 time_end = ''
 time_mark = ''
 
+
 async def notify_users():
     if USERS:  # asyncio.wait doesn't accept an empty list
         msg = json.dumps({"signal": "notify", "type": "users", "count": len(USERS)})
-        print(f'notify users info realtime: {msg}')
+        # print(f'notify users info realtime: {msg}')
         await asyncio.wait([user.send(msg) for user in USERS])
 
 
 async def notify_msg(msg):
     if USERS:  # asyncio.wait doesn't accept an empty list
-        print(f'notify msg : {msg} to {USERS}')
+        # print(f'notify msg : {msg} to {USERS}')
         msg = json.dumps(msg).encode('utf-8')
         await asyncio.wait([user.send(msg) for user in USERS])
 
 
 async def register(ws):
     USERS.append(ws)
-    print(f'new ws conn registration: {ws}')
+    # print(f'new ws conn registration: {ws}')
     await notify_users()
 
 
 async def unregister(ws):
     USERS.remove(ws)
-    print(f'remove ws conn registration: {ws}')
+    # print(f'remove ws conn registration: {ws}')
     await notify_users()
 
 
 def send_post(req_data):
-    print('running %s_post ...' % req_data['type'])
+    logger.info('running %s_post ...' % req_data['type'])
     api_url = config.POST_URL
     header = templates.header
     request = mrequest.Request()
-    print(f'post request data: {req_data}')
+    logger.info(f'post request data: {req_data}')
     resp = request.post_request(api_url, req_data, header)
-    print(f'post response data: {resp}')
-    print('running %s_post over ...' % req_data['type'])
+    logger.info(f'post response data: {resp}')
+    logger.info(f"post response time: {resp['time_consuming']} ms")
+    logger.info('running %s_post over ...' % req_data['type'])
 
 
 async def recv_msg(ws):
@@ -79,7 +80,7 @@ async def recv_msg(ws):
 
 
 async def send_msg(ws, msg):
-    print(f'send msg: {msg}')
+    # print(f'send msg: {msg}')
     await ws.send(msg)
     return True
 
@@ -118,8 +119,7 @@ async def main_logic(ws, path):
     try:
         while True:
             msg = await recv_msg(ws)
-            print(f'recv msg: {msg}')
-            # await asyncio.sleep(1)
+            # print(f'recv msg: {msg}')
             if msg['signal'] == 'chain_info':
                 logger.info(f'recv chain_info from client, content is:\n{msg} ...')
                 R_CHAIN_KEYS.extend(msg['r_chain_key'])
@@ -150,15 +150,16 @@ async def main_logic(ws, path):
                     # send post request
                     logger.info(f'send b post request ...')
                     print(f'detect S chain {s_ready_number} post over')
-                    await wait_for_a_interval_time()
+                    if config.STRESS_LOOP_INTERVAL != 0:
+                        await wait_for_a_interval_time()
                     send_post(da_b.data)
                     lock_hash_r.clear()
 
                     # send notify for running R post request (contains B_chain's and S_chain's lock_hash)
                     await da_b.gen_lock_hash()
                     msg_tmp = dict(signal='r_start', lockHash=da_b.lock_hash)
-                    logger.info('send notify for running R post request ...')
-                    logger.info(f'notify content:\n{msg_tmp}')
+                    # logger.info('send notify for running R post request ...')
+                    # logger.info(f'notify content:\n{msg_tmp}')
                     await notify_msg(msg_tmp)
                     r_ready_number, s_ready_number = 0, 0
             elif msg['signal'] == config.R_READY_MARK:
@@ -171,11 +172,13 @@ async def main_logic(ws, path):
                 if r_ready_number == r_number:
                     logger.info(f'detect -> r_ready_number[{r_ready_number}] = r_number[{r_number}]')
                     # send notify for running S post request
-                    logger.info('send notify for running S post request ...')
+                    # logger.info('send notify for running S post request ...')
                     msg_tmp = dict(signal='s_start', s_chain_key=S_CHAIN_KEYS)
-                    logger.info(f'notify content:\n{msg_tmp}')
+                    # logger.info(f'notify content:\n{msg_tmp}')
                     await notify_msg(msg_tmp)
                     r_ready_number, s_ready_number = 0, 0
+    except Exception as e:
+        logger.error(e)
     finally:
         await unregister(ws)
 

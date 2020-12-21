@@ -27,9 +27,6 @@ LOCK_HASH_S = []
 LOCK_HASH_R = []
 
 
-
-
-
 def create_relay_and_shard_chain(r_chain_key):
     chainNu_r_local = config.CHAIN_NU_LOCAL['R']
     chainNu_s_node = int(config.CHAIN_NU_LOCAL['S'] / chainNu_r_local)
@@ -59,7 +56,7 @@ def gen_data_shard_chain(lock_hash_r, s_chain_key):
         for lock_ha in lock_hash_r:
             if lock_ha['chainkey'] == data.data['chainKey'][:2]:
                 data.gen_data([lock_ha], s_chain_key)
-                logger.info(f'Automatically generate post data:\n{data.data}')
+                # logger.info(f'Automatically generate post data:\n{data.data}')
                 # every shard chain has one relay chain only. so do continue.
                 continue
 
@@ -78,12 +75,12 @@ def gen_data_relay_chain(lock_hash_s, lock_hash_b):
         logger.info(f'R_CHAINS now:\n{R_CHAINS}')
         logger.info(f'lock_hash now:\n{lock_hash}')
         del lock_hash
-        logger.info(f'Automatically generate post data:\n{data.data}')
+        # logger.info(f'Automatically generate post data:\n{data.data}')
            # clear lock_hash
 
 
 async def send_msg(ws, msg):
-    print(f'send msg: {msg}')
+    # print(f'send msg: {msg}')
     msg = json.dumps(msg).encode('utf-8')
     await ws.send(msg)
     return True
@@ -92,7 +89,7 @@ async def send_msg(ws, msg):
 async def recv_msg(ws):
     msg = await ws.recv()
     msg = json.loads(msg)
-    print(f'client 2 recv : {msg}')
+    # print(f'client 2 recv : {msg}')
     return msg
 
 
@@ -101,14 +98,15 @@ async def gen_data(chains, lock_hash):
         await asyncio.wait([da.gen_data(lock_hash) for da in chains])
 
 async def send_post(req_data):
-    print('running %s_post ...' % req_data['type'])
+    logger.info('running %s_post ...' % req_data['type'])
     api_url = config.POST_URL
     header = templates.header
     request = mrequest.Request()
-    print(f'post request data: {req_data}')
+    # logger.info(f'post request data: {req_data}')
     resp = request.post_request(api_url, req_data, header)
-    print(f'post response data: {resp}')
-    print('running %s_post over ...' % req_data['type'])
+    logger.info(f'post response data: {resp}')
+    logger.info(f"post response time: {resp['time_consuming']}")
+    logger.info('running %s_post over ...' % req_data['type'])
 
 async def send_post_request(chains):
     if chains:  # asyncio.wait doesn't accept an empty list
@@ -155,7 +153,7 @@ async def main_logic():
         while True:
             print('into while loop...')
             msg = await recv_msg(ws)
-            print(common.current_time_iso())
+            # print(common.current_time_iso())
             if msg['signal'] == 'notify':
                 pass
             if msg['signal'] == 'r_start':

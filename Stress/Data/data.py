@@ -123,7 +123,7 @@ class Data(object):
             up_stream.extend(self._gen_ss_up_info(ss))
         return up_stream
 
-    def gen_data(self, lock_hash, s_chain_key=None):
+    def _gen_data_public(self, lock_hash, s_chain_key=None):
         self.shard_list = copy.deepcopy(s_chain_key)
         if self.data['hash'] == '':
             self.data['father'] = ''
@@ -141,50 +141,61 @@ class Data(object):
             self.data['interval'] = float('%.3f' % float(interval.days * 24 * 3600 + interval.seconds + interval.microseconds * 0.000001))
             # self.data['interval'] = interval.days * 24 * 3600 + interval.seconds + interval.microseconds * 0.000001
             self.data['time'] = now
-
         self.data['lockHash'] = lock_hash
 
+    def _gen_data_b(self):
         # generated dynamically(get from config file)
-        if self.data['type'] == 'S':
-            self.data['trans'] = config.SS_TRADE_NU
-        elif self.data['type'] == 'B':
-            if self.data['height'] == 0:
-                self.data['trans'] = 0
-            else:
-                self.data['trans'] = config.SS_TRADE_NU * config.CHAIN_NU_TOTAL["S"]
-        elif self.data['type'] == 'R':
-            if self.data['height'] == 0:
-                self.data['trans'] = 0
-            else:
-                self.data['trans'] = config.SS_TRADE_NU * int(config.CHAIN_NU_LOCAL["S"] / config.CHAIN_NU_LOCAL["R"])
+        if self.data['height'] == 0:
+            self.data['trans'] = 0
+        else:
+            self.data['trans'] = config.SS_TRADE_NU * config.CHAIN_NU_TOTAL["S"]
+        # upStream and downStream:
+        self.data['detail']['upStream'] = []
+        self.data['detail']['ss'] = []
+        # B|R: have downHash, don't have upHash
+        self.data['downHash'] = self._gen_hash()
+        # B: don't have upHash
+        self.data['upHash'] = ""
+        # gen size after all
+        self.data['size'] = sys.getsizeof(str(self.data)) + 1024 * 3
 
-                # upStream and downStream:
-        # B|R: use template data
+    def _gen_data_r(self):
+        # generated dynamically(get from config file)
+        if self.data['height'] == 0:
+            self.data['trans'] = 0
+        else:
+            self.data['trans'] = config.SS_TRADE_NU * int(config.CHAIN_NU_LOCAL["S"] / config.CHAIN_NU_LOCAL["R"])
+        self.data['detail']['ss'] = []
+        # S|R: have upHash
+        self.data['upHash'] = self._gen_hash()
+        # B|R: have downHash, don't have upHash
+        self.data['downHash'] = self._gen_hash()
+        self.data['size'] = sys.getsizeof(str(self.data)) + 1024 * 3
+
+    def _gen_data_s(self):
+        # generated dynamically(get from config file)
+        self.data['trans'] = config.SS_TRADE_NU
+
+        # upStream and downStream:
         # S: generated dynamically; don't have downStream
-        if self.data['type'] == 'S':
-            self.data['detail']['ss'] = self._gen_ss_data()
-            self.data['detail']['upStream'] = self._gen_upstream_s()
-            self.data['detail']['downStream'] = []
-        # B: don't have upStream
-        if self.data['type'] == 'B':
-            self.data['detail']['upStream'] = []
-        # B|R: don't have ss
-        if self.data['type'] == 'B' or self.data['type'] == 'R':
-            self.data['detail']['ss'] = []
+        self.data['detail']['ss'] = self._gen_ss_data()
+        self.data['detail']['upStream'] = self._gen_upstream_s()
+        self.data['detail']['downStream'] = []
 
         # S|R: have upHash
-        if self.data['type'] == 'S' or self.data['type'] == 'R':
-            self.data['upHash'] = self._gen_hash()
-        # B|R: have downHash, don't have upHash
-        if self.data['type'] == 'B' or self.data['type'] == 'R':
-            self.data['downHash'] = self._gen_hash()
+        self.data['upHash'] = self._gen_hash()
         # S: don't have downHash
-        if self.data['type'] == 'S':
-            self.data['downHash'] = ""
-        # B: don't have upHash
-        if self.data['type'] == 'B':
-            self.data['upHash'] = ""
+        self.data['downHash'] = ""
         self.data['size'] = sys.getsizeof(str(self.data)) + 1024 * 3
+
+    def gen_data(self, lock_hash, s_chain_key=None):
+        self._gen_data_public(lock_hash, s_chain_key)
+        if self.data['type'] == 'B':
+            self._gen_data_b()
+        elif self.data['type'] == 'R':
+            self._gen_data_r()
+        elif self.data['type'] == 'S':
+            self._gen_data_s()
 
     async def gen_lock_hash(self):
         data = self.data

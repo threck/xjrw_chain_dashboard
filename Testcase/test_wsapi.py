@@ -625,4 +625,3 @@ class TestWSAPITest:
     #     assert test.assert_db_text(mg_data[0]['size'], resp_exp['size'])
     #     assert test.assert_db_text(mg_data[0]['detail']['upStream'], resp_exp['detail']['upStream'])
     #     assert test.assert_db_text(mg_data[0]['detail']['downStream'], resp_exp['detail']['downStream'])
-
