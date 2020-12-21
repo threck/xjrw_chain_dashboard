@@ -4,13 +4,11 @@
 pip install pytest pytest-html allure-pytest pymongo requests requests-toolbelt websocket-client
 base58
 
-## how to run:
+## how to run auto api testcase:
 python run.py
-
 
 ## not needed
 pip install PyYaml faker
 
-
 ### how to set the cases you want to run
-pytest -m smoke  # run cases that marked as [smoke]
+pytest -m http  # run cases that marked as [http]

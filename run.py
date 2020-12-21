@@ -32,6 +32,7 @@ if __name__ == '__main__':
     # run pytest
     # /test_httpapi.py::TestHTTPAPITest::test_heart_beat_update_data
     # /test_wsapi.py::TestWSAPITest::test_get_real_chain_block_info_with_sub
+    # -m http  # run testcases which marked as http
     args_allure = ['-s', '-q', '--alluredir', xml_report_path_allure,
                    'Testcase/test_wsapi.py::TestWSAPITest::test_get_real_chain_block_info_with_sub']
     args_pytest = ['-s', '-v', '--html=%s' % os.path.join(html_report_path,
