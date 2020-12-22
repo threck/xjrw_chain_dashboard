@@ -10,22 +10,28 @@
 IP = "192.168.0.30"
 # IP = "172.16.8.106"
 PORT = 5678
-POST_URL = 'http://192.168.0.164:8888/api/v1.0/block'
+# POST_URL = 'http://192.168.0.164:8888/api/v1.0/block'
 # POST_URL = 'http://172.70.16.105:8899/api/v1.0/block'
+POST_URL = 'http://127.0.0.1:8888/api/v1.0/block'
+CPU_NUMBER = 2
 
 
 #####################
 # Chain info
 #####################
-CHAIN_NU_TOTAL = {"R": 2, "S": 4}
-CHAIN_NU_LOCAL = {"R": 2, "S": 4}
+CHAIN_NU_TOTAL = {"R": 4, "S": 8, "B": 1}
+CHAIN_NU_LOCAL = {"R": 4, "S": 8, "B": 1}
 SS_TRADE_NU = 3
 
 #####################
 # Chain post request status mark
 #####################
-R_READY_MARK = 'r_ready'
-S_READY_MARK = 's_ready'
+B_OVER_MARK = 'b_over'
+R_OVER_MARK = 'r_over'
+S_OVER_MARK = 's_over'
+B_START_MARK = 'b_start'
+R_START_MARK = 'r_start'
+S_START_MARK = 's_start'
 
 #####################
 # Send times control

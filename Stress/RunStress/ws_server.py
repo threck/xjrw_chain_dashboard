@@ -11,24 +11,25 @@ import time
 import sys
 import random
 import json
-from Stress.Data import templates
-from Stress.Data import data
-from Stress.Conf import config
+
+from datetime import datetime
+
 from Common import common
 from Common import mrequest
 from Common import log
-from datetime import datetime
+
+from Stress.Data import templates
+from Stress.Data import data
+from Stress.Data import gen
+from Stress.Conf import config
+from Stress.Common import consts
+from Stress.HttpRequest import post
+
+
 
 logger = log.Log()
 USERS = list()
-s_ready_number = 0
-r_ready_number = 0
-r_number = config.CHAIN_NU_TOTAL['R']
-s_number = config.CHAIN_NU_TOTAL['S']
 da_b = data.Data('B', '', '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBfBqb01')
-R_CHAIN_KEYS = []
-S_CHAIN_KEYS = []
-lock_hash_r = []
 
 time_start = ''
 time_end = ''
@@ -40,6 +41,7 @@ async def notify_users():
         msg = json.dumps({"signal": "notify", "type": "users", "count": len(USERS)})
         # print(f'notify users info realtime: {msg}')
         await asyncio.wait([user.send(msg) for user in USERS])
+        logger.info(f'server notify msg: {msg}')
 
 
 async def notify_msg(msg):
@@ -47,6 +49,7 @@ async def notify_msg(msg):
         # print(f'notify msg : {msg} to {USERS}')
         msg = json.dumps(msg).encode('utf-8')
         await asyncio.wait([user.send(msg) for user in USERS])
+        logger.info(f'server notify msg: {msg}')
 
 
 async def register(ws):
@@ -61,27 +64,18 @@ async def unregister(ws):
     await notify_users()
 
 
-def send_post(req_data):
-    logger.info('running %s_post ...' % req_data['type'])
-    api_url = config.POST_URL
-    header = templates.header
-    request = mrequest.Request()
-    logger.info(f'post request data: {req_data}')
-    resp = request.post_request(api_url, req_data, header)
-    logger.info(f'post response data: {resp}')
-    logger.info(f"post response time: {resp['time_consuming']} ms")
-    logger.info('running %s_post over ...' % req_data['type'])
-
-
 async def recv_msg(ws):
     msg = await ws.recv()
     msg = json.loads(msg)
+    logger.info(f'server recv msg: {msg}')
     return msg
 
 
 async def send_msg(ws, msg):
     # print(f'send msg: {msg}')
+    msg = json.dumps(msg).encode('utf-8')
     await ws.send(msg)
+    logger.info(f"server send msg:{msg}")
     return True
 
 def count_interval_time():
@@ -119,15 +113,11 @@ async def main_logic(ws, path):
     try:
         while True:
             msg = await recv_msg(ws)
-            # print(f'recv msg: {msg}')
             if msg['signal'] == 'chain_info':
-                logger.info(f'recv chain_info from client, content is:\n{msg} ...')
                 R_CHAIN_KEYS.extend(msg['r_chain_key'])
-                S_CHAIN_KEYS.extend(msg['s_chain_key'])
                 msg_tmp = dict(signal='chain_info', r_chain_key=R_CHAIN_KEYS)
-                logger.info(f'save chain_info, content now is:\n{msg_tmp} ...')
                 await notify_msg(msg_tmp)
-            if msg['signal'] == 'b_start' or msg['signal'] == config.S_READY_MARK:
+            if msg['signal'] == 'b_start' or msg['signal'] == config.S_OVER_MARK:
                 s_ready_number += msg['s_number']
                 if s_ready_number == s_number:
                     # loop time control logic.
@@ -139,11 +129,9 @@ async def main_logic(ws, path):
                         logger.info(f'=====> STRESS LOOP :[run forever]')
                     else:
                         logger.info(f'=====> STRESS LOOP LEFT:[{config.STRESS_LOOP_TIME} times]')
-
                     logger.info(f'detect -> s_ready_number[{s_ready_number}] = s_number[{s_number}]')
                     # prepare BEACON chain post request data
                     logger.info('prepare BEACON chain post request data ...')
-                    logger.info(f'lock_hash_r content:\n{lock_hash_r}')
                     da_b.gen_data(lock_hash_r)
                     logger.info(f'Automatically generate post data:{da_b.data}')
 
@@ -152,17 +140,19 @@ async def main_logic(ws, path):
                     print(f'detect S chain {s_ready_number} post over')
                     if config.STRESS_LOOP_INTERVAL != 0:
                         await wait_for_a_interval_time()
-                    send_post(da_b.data)
+                    #post.send_post(da_b.data)
                     lock_hash_r.clear()
 
                     # send notify for running R post request (contains B_chain's and S_chain's lock_hash)
                     await da_b.gen_lock_hash()
                     msg_tmp = dict(signal='r_start', lockHash=da_b.lock_hash)
-                    # logger.info('send notify for running R post request ...')
-                    # logger.info(f'notify content:\n{msg_tmp}')
                     await notify_msg(msg_tmp)
                     r_ready_number, s_ready_number = 0, 0
-            elif msg['signal'] == config.R_READY_MARK:
+            elif msg['signal'] == config.B_OVER_MARK:
+                msg_tmp = dict(signal='r_start', lockHash='')
+                msg_tmp = json.dumps(msg_tmp).encode('utf-8')
+                await notify_msg(msg_tmp)
+            elif msg['signal'] == config.R_OVER_MARK:
                 r_ready_number += msg['r_number']
                 # collect lock_hash for next post data of B chain
                 logger.info(f"r ready, recv lockHash_r: {msg['lockHash']}")
@@ -172,9 +162,7 @@ async def main_logic(ws, path):
                 if r_ready_number == r_number:
                     logger.info(f'detect -> r_ready_number[{r_ready_number}] = r_number[{r_number}]')
                     # send notify for running S post request
-                    # logger.info('send notify for running S post request ...')
-                    msg_tmp = dict(signal='s_start', s_chain_key=S_CHAIN_KEYS)
-                    # logger.info(f'notify content:\n{msg_tmp}')
+                    msg_tmp = dict(signal='s_start')
                     await notify_msg(msg_tmp)
                     r_ready_number, s_ready_number = 0, 0
     except Exception as e:
@@ -183,13 +171,57 @@ async def main_logic(ws, path):
         await unregister(ws)
 
 
+
+async def main_logic_tmp(ws, path):
+    await register(ws)
+    try:
+        while True:
+            msg = await recv_msg(ws)
+            # 收到生成 R chain key 的指令, 生成 R|S chain key; 并返回 R|S chain key
+            if msg['signal'] == 'chain_info':
+                chain_nu_local = msg['chain_nu_local']
+                gen_r_chain_key, gen_s_chain_key = gen.create_r_and_s_chain_key(chain_nu_local)
+                msg_send = dict(signal='chain_info', chain_key_r=gen_r_chain_key, chain_key_s=gen_s_chain_key)
+                await send_msg(ws, msg_send)
+            # 收到 b 结束信号
+            elif msg['signal'] == config.B_OVER_MARK:
+                consts.LOCK_HASH_B_WS.extend(msg['lockHash'])
+                if len(consts.CHAIN_KEYS_R) == config.CHAIN_NU_TOTAL['R']:
+                    msg_notify = dict(signal=config.R_START_MARK, lockHash=consts.LOCK_HASH_B_WS)
+                    await notify_msg(msg_notify)
+                    consts.LOCK_HASH_B_WS.clear()
+            # 收到 r 结束信号
+            elif msg['signal'] == config.R_OVER_MARK:
+                consts.R_OVER_NU += msg['r_number']
+                consts.LOCK_HASH_R_WS.extend(msg['lockHash'])
+                if consts.R_OVER_NU == config.CHAIN_NU_TOTAL['R']:
+                    logger.info(f"detect -> r_ready_number[{consts.R_OVER_NU}] = r_number[{config.CHAIN_NU_TOTAL['R']}]")
+                    # send notify for running S post request
+                    msg_tmp = dict(signal=config.S_START_MARK)
+                    await notify_msg(msg_tmp)
+                    consts.R_OVER_NU = 0
+            # 收到 s 结束信号
+            elif msg['signal'] == config.S_OVER_MARK:
+                consts.S_OVER_NU += msg['s_number']
+                if consts.S_OVER_NU == config.CHAIN_NU_TOTAL['S']:
+                    msg_notify = dict(signal=config.B_START_MARK, lockHash=consts.LOCK_HASH_R_WS)
+                    await notify_msg(msg_notify)
+                    consts.LOCK_HASH_R_WS.clear()
+                    consts.S_OVER_NU = 0
+
+    except Exception as e:
+        logger.error(e)
+    finally:
+        await unregister(ws)
+
+
 def main():
     # clear mongo database
-    mg = data.MongoDataBase()
-    mg.clear_mongo_database()
+    # mg = data.MongoDataBase()
+    # mg.clear_mongo_database()
 
     # start websocket server
-    start_server = websockets.serve(main_logic, config.IP, config.PORT)
+    start_server = websockets.serve(main_logic_tmp, config.IP, config.PORT)
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
 

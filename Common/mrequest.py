@@ -9,6 +9,7 @@ import random
 import requests
 import json
 from Common import consts
+from Common import common
 from Common import log
 from requests_toolbelt import MultipartEncoder
 
@@ -68,10 +69,12 @@ class Request(object):
             log.Log().info(f'post request api_url: {url}')
             log.Log().info(f'post request json data: {data}')
             log.Log().info(f'post request header: {header}')
+            log.Log().info(f"post request start time: {common.current_time_iso()}")
             if data is None:
                 response = requests.post(url=url, headers=header)
             else:
                 response = requests.post(url=url, json=data, headers=header)
+            log.Log().info(f"post request stop time: {common.current_time_iso()}")
         except requests.RequestException as e:
             print('%s%s' % ('RequestException url: ', url))
             print(e)

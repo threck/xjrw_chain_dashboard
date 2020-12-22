@@ -15,7 +15,7 @@ from Common import log
 from Common import common
 from Common import consts
 from Stress.Conf import config
-from . import templates
+from Stress.Data import templates
 
 
 logger = log.Log()
@@ -196,8 +196,9 @@ class Data(object):
             self._gen_data_r()
         elif self.data['type'] == 'S':
             self._gen_data_s()
+        logger.info(f'Automatically generate data:\n{self.data}')
 
     async def gen_lock_hash(self):
         data = self.data
         self.lock_hash = dict(type=data['type'], chainkey=data['chainKey'], height=data['height'])
-        logger.info(f'Automatically generate lockHash:\n{self.lock_hash}')
+        # logger.info(f'Automatically generate lockHash:\n{self.lock_hash}')
