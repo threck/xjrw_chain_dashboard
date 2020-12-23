@@ -7,20 +7,22 @@
 #####################
 # Server info
 #####################
-IP = "192.168.0.30"
-# IP = "172.16.8.106"
+# IP = "192.168.0.30"
+IP = "172.16.8.106"
 PORT = 5678
 # POST_URL = 'http://192.168.0.164:8888/api/v1.0/block'
 # POST_URL = 'http://172.70.16.105:8899/api/v1.0/block'
-POST_URL = 'http://127.0.0.1:8888/api/v1.0/block'
-CPU_NUMBER = 3
+# POST_URL = 'http://127.0.0.1:8888/api/v1.0/block'
+POST_URL = 'http://172.16.7.182:8899/api/v1.0/block'
+# CPU_NUMBER = 3
+CPU_NUMBER = 64
 
 
 #####################
 # Chain info
 #####################
-CHAIN_NU_TOTAL = {"R": 4, "S": 8, "B": 1}
-CHAIN_NU_LOCAL = {"R": 2, "S": 4, "B": 1}
+CHAIN_NU_TOTAL = {"R": 6, "S": 12}
+CHAIN_NU_LOCAL = {"R": 2, "S": 4}
 SS_TRADE_NU = 3
 
 #####################

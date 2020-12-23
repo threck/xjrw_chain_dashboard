@@ -29,7 +29,7 @@ from Stress.HttpRequest import post
 
 logger = log.Log()
 USERS = list()
-da_b = data.Data('B', '', '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBfBqb01')
+# da_b = data.Data('B', '', '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBfBqb01')
 
 time_start = ''
 time_end = ''
@@ -177,6 +177,7 @@ async def main_logic_tmp(ws, path):
     try:
         while True:
             msg = await recv_msg(ws)
+            # await asyncio.sleep(1)
             # 收到生成 R chain key 的指令, 生成 R|S chain key; 并返回 R|S chain key
             if msg['signal'] == 'chain_info':
                 chain_nu_local = msg['chain_nu_local']

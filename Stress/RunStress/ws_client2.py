@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from Common import common
 from Common import mrequest
 from Common import log
-from Stress.Conf import config2 as config
+from Stress.Conf import config
 from Stress.Common import consts
 from Stress.Data import data
 from Stress.Data import gen
@@ -22,9 +22,9 @@ from Stress.Data import templates
 from Stress.HttpRequest import post
 
 logger = log.Log()
-
+B_NODE = 0
 uri = 'ws://%s:%s' % (config.IP, config.PORT)
-da_b = data.Data('B', '', '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBfBqb01')
+
 
 
 #####################
@@ -305,6 +305,7 @@ async def main_logic():
 async def main_logic_tmp():
     global LOCK_HASH_R
     global LOCK_HASH_S
+    global B_NODE
     async with websockets.connect(uri) as ws:
         # 发送本地 R|S 数量
         msg_tmp = dict(signal='chain_info', chain_nu_local=config.CHAIN_NU_LOCAL)
@@ -324,8 +325,10 @@ async def main_logic_tmp():
         create_s_chain(CHAIN_KEY_S)
 
         # 如果配置了B，则生成B post数据; 发送post; 生成b_lock_hash; 发送 b_over, lock_hash_b
-        if config.CHAIN_NU_LOCAL['B'] == 1:
+        # if config.CHAIN_NU_LOCAL['B'] == 1:
+        if B_NODE == 1:
             logger.info('prepare BEACON chain post request data ...')
+            da_b = data.Data('B', '', '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBfBqb01')
             da_b.gen_data(LOCK_HASH_R)
             post.send_post(da_b.data)
             await da_b.gen_lock_hash()
@@ -340,9 +343,9 @@ async def main_logic_tmp():
             print('into while loop...')
             msg = await recv_msg(ws)
             # print(common.current_time_iso())
-            await asyncio.sleep(1)
             if msg['signal'] == config.B_START_MARK:
-                if config.CHAIN_NU_LOCAL['B'] == 1:
+                # if config.CHAIN_NU_LOCAL['B'] == 1:
+                if B_NODE == 1:
                     logger.info('prepare BEACON chain post request data ...')
                     da_b.gen_data(msg['lockHash'])
                     post.send_post(da_b.data)
@@ -362,7 +365,7 @@ async def main_logic_tmp():
                 # send post request
                 logger.info('send r post request ...')
                 logger.info(f"R_CHAINS: {R_CHAINS}")
-                send_post_request_multi_threading(R_CHAINS)
+                # send_post_request_multi_threading(R_CHAINS)
                 LOCK_HASH_S.clear()
                 lock_hash_b.clear()
 

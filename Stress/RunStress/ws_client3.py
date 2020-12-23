@@ -22,10 +22,8 @@ from Stress.Data import templates
 from Stress.HttpRequest import post
 
 logger = log.Log()
-B_NODE = 1
+B_NODE = 0
 uri = 'ws://%s:%s' % (config.IP, config.PORT)
-
-
 
 #####################
 # WS client
@@ -39,7 +37,6 @@ CHAIN_KEY_S = []
 # R|S lock hash
 LOCK_HASH_S = []
 LOCK_HASH_R = []
-
 
 
 def create_r_chain(r_chain_key):
