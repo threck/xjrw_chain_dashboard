@@ -67,7 +67,7 @@ class Request(object):
             url = '%s%s' % ('http://', url)
         try:
             log.Log().info(f'post request api_url: {url}')
-            log.Log().info(f'post request json data: {data}')
+            log.Log().debug(f'post request json data: {data}')
             log.Log().info(f'post request header: {header}')
             log.Log().info(f"post request start time: {common.current_time_iso()}")
             if data is None:

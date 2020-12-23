@@ -196,7 +196,7 @@ class Data(object):
             self._gen_data_r()
         elif self.data['type'] == 'S':
             self._gen_data_s()
-        logger.info(f'Automatically generate data:\n{self.data}')
+        logger.debug(f'Automatically generate data:\n{self.data}')
 
     async def gen_lock_hash(self):
         data = self.data

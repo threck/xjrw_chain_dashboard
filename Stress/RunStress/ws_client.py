@@ -111,8 +111,8 @@ def gen_data_relay_chain(lock_hash_s, lock_hash_b):
         else:
             lock_hash = lock_hash_b
         data.gen_data(lock_hash)
-        logger.info(f'R_CHAINS now:\n{R_CHAINS}')
-        logger.info(f'lock_hash now:\n{lock_hash}')
+        logger.debug(f'R_CHAINS now:\n{R_CHAINS}')
+        logger.debug(f'lock_hash now:\n{lock_hash}')
         del lock_hash
         # logger.info(f'Automatically generate post data:\n{data.data}')
         # clear lock_hash
@@ -364,7 +364,7 @@ async def main_logic_tmp():
 
                 # send post request
                 logger.info('send r post request ...')
-                logger.info(f"R_CHAINS: {R_CHAINS}")
+                logger.debug(f"R_CHAINS: {R_CHAINS}")
                 # send_post_request_multi_threading(R_CHAINS)
                 LOCK_HASH_S.clear()
                 lock_hash_b.clear()
