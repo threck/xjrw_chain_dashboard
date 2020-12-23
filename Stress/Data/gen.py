@@ -50,19 +50,6 @@ def create_s_chain_key(chain_nu_local, chain_key_r):
     return chain_key_s_local
 
 
-def create_r_chain(r_chain_key):
-    for i in range(len(r_chain_key)):
-        x = r_chain_key[i]
-        nodeId_r = '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBf00r%s' % x
-        da_r = data.Data('R', x, nodeId_r)
-        consts.R_CHAINS.append(da_r)
 
-
-def create_s_chain(s_chain_key):
-    for i in range(len(s_chain_key)):
-        x = s_chain_key[i]
-        nodeId_s = '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfo00s%s' % x
-        da_s = data.Data('S', x, nodeId_s)
-        consts.S_CHAINS.append(da_s)
 
 

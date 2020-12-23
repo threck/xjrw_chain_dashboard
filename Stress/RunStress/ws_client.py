@@ -24,14 +24,42 @@ from Stress.HttpRequest import post
 logger = log.Log()
 
 uri = 'ws://%s:%s' % (config.IP, config.PORT)
-
-
 da_b = data.Data('B', '', '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBfBqb01')
 
 
+#####################
+# WS client
+#####################
+# R|S chains object
+R_CHAINS = []
+S_CHAINS = []
+# R|S chain key
+CHAIN_KEY_R = []
+CHAIN_KEY_S = []
+# R|S lock hash
+LOCK_HASH_S = []
+LOCK_HASH_R = []
+
+
+
+def create_r_chain(r_chain_key):
+    for i in range(len(r_chain_key)):
+        x = r_chain_key[i]
+        nodeId_r = '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBf00r%s' % x
+        da_r = data.Data('R', x, nodeId_r)
+        R_CHAINS.append(da_r)
+
+
+def create_s_chain(s_chain_key):
+    for i in range(len(s_chain_key)):
+        x = s_chain_key[i]
+        nodeId_s = '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfo00s%s' % x
+        da_s = data.Data('S', x, nodeId_s)
+        S_CHAINS.append(da_s)
+
 
 def gen_data_shard_chain(lock_hash_r, s_chain_key):
-    for data in consts.S_CHAINS:
+    for data in S_CHAINS:
         for lock_ha in lock_hash_r:
             if lock_ha['chainkey'] == data.data['chainKey'][:2]:
                 data.gen_data([lock_ha], s_chain_key)
@@ -39,9 +67,10 @@ def gen_data_shard_chain(lock_hash_r, s_chain_key):
                 # every shard chain has one relay chain only. so do continue.
                 continue
 
+
 def gen_data_shard_chain_multi(lock_hash_r, s_chain_key):
     p = Pool(config.CPU_NUMBER)
-    for data in consts.S_CHAINS:
+    for data in S_CHAINS:
         for lock_ha in lock_hash_r:
             if lock_ha['chainkey'] == data.data['chainKey'][:2]:
                 p.apply_async(data.gen_data, args=([lock_ha], s_chain_key))
@@ -51,17 +80,18 @@ def gen_data_shard_chain_multi(lock_hash_r, s_chain_key):
     p.close()
     p.join()
 
+
 def gen_data_relay_chain_multi(lock_hash_s, lock_hash_b):
     p = Pool(config.CPU_NUMBER)
-    for data in consts.R_CHAINS:
+    for data in R_CHAINS:
         lock_hash = []
         if lock_hash_s != []:
             for lock_ha in lock_hash_s:
                 if lock_ha['chainkey'][:2] == data.data['chainKey']:
                     lock_hash.append(lock_ha)
-            lock_hash.append(lock_hash_b)
+            lock_hash.extend(lock_hash_b)
         else:
-            lock_hash = [lock_hash_b]
+            lock_hash = lock_hash_b
         p.apply_async(data.gen_data, args=(lock_hash,))
         # logger.info(f'R_CHAINS now:\n{R_CHAINS}')
         # logger.info(f'lock_hash now:\n{lock_hash}')
@@ -71,7 +101,7 @@ def gen_data_relay_chain_multi(lock_hash_s, lock_hash_b):
 
 
 def gen_data_relay_chain(lock_hash_s, lock_hash_b):
-    for data in consts.R_CHAINS:
+    for data in R_CHAINS:
         lock_hash = []
         if lock_hash_s != []:
             for lock_ha in lock_hash_s:
@@ -81,7 +111,7 @@ def gen_data_relay_chain(lock_hash_s, lock_hash_b):
         else:
             lock_hash = lock_hash_b
         data.gen_data(lock_hash)
-        logger.info(f'R_CHAINS now:\n{consts.R_CHAINS}')
+        logger.info(f'R_CHAINS now:\n{R_CHAINS}')
         logger.info(f'lock_hash now:\n{lock_hash}')
         del lock_hash
         # logger.info(f'Automatically generate post data:\n{data.data}')
@@ -124,7 +154,6 @@ def send_post(req_data):
     logger.info('running %s_post over ...' % req_data['type'])
 
 
-
 def send_post_request_threading(chains):
     th = []
     if chains:
@@ -134,7 +163,6 @@ def send_post_request_threading(chains):
             t.start()
         for t in th:
             t.join()
-
 
 
 def get_muti_threading_chains(chains, group):
@@ -284,19 +312,19 @@ async def main_logic_tmp():
         while True:
             msg = await recv_msg(ws)
             if msg['signal'] == 'chain_info':
-                consts.CHAIN_KEY_R = msg['chain_key_r']
-                consts.CHAIN_KEY_S = msg['chain_key_s']
+                CHAIN_KEY_R = msg['chain_key_r']
+                CHAIN_KEY_S = msg['chain_key_s']
                 break
         logger.info(f'get chain_info from ws, content is:\n{msg} ...')
         # 生成 R|S 初始链数据
         logger.info('create r_chain and s_chain according r_chain_key now ...')
-        gen.create_r_chain(consts.CHAIN_KEY_R)
-        gen.create_s_chain(consts.CHAIN_KEY_S)
+        create_r_chain(CHAIN_KEY_R)
+        create_s_chain(CHAIN_KEY_S)
 
         # 如果配置了B，则生成B post数据; 发送post; 生成b_lock_hash; 发送 b_over, lock_hash_b
         if config.CHAIN_NU_LOCAL['B'] == 1:
             logger.info('prepare BEACON chain post request data ...')
-            da_b.gen_data(consts.LOCK_HASH_R)
+            da_b.gen_data(LOCK_HASH_R)
             post.send_post(da_b.data)
             await da_b.gen_lock_hash()
             msg_tmp = dict(signal=config.B_OVER_MARK, lockHash=[da_b.lock_hash])
@@ -325,25 +353,25 @@ async def main_logic_tmp():
                 logger.info('prepare RELAY chain post request data ...')
                 lock_hash_b = msg['lockHash']
                 logger.info(f"gen relay chain start:{time.strftime('%X')}")
-                gen_data_relay_chain(consts.LOCK_HASH_S, lock_hash_b)
+                gen_data_relay_chain(LOCK_HASH_S, lock_hash_b)
                 logger.info(f"gen relay chain end:{time.strftime('%X')}")
                 # # await gen_data(R_CHAINS, lock_hash)
 
                 # send post request
                 logger.info('send r post request ...')
-                logger.info(f"R_CHAINS: {consts.R_CHAINS}")
-                send_post_request_multi_threading(consts.R_CHAINS)
-                consts.LOCK_HASH_S.clear()
+                logger.info(f"R_CHAINS: {R_CHAINS}")
+                # send_post_request_multi_threading(R_CHAINS)
+                LOCK_HASH_S.clear()
                 lock_hash_b.clear()
 
                 # gen all lock hash of relay chain
                 logger.info('gen all lock hash of relay chain ...')
-                await gen_lock_hash(consts.R_CHAINS)
+                await gen_lock_hash(R_CHAINS)
 
                 # send ws request with [msg_tmp]
                 logger.info('send message for telling R over ...')
-                consts.LOCK_HASH_R = [da.lock_hash for da in consts.R_CHAINS]
-                msg_tmp = dict(signal=config.R_OVER_MARK, r_number=config.CHAIN_NU_LOCAL['R'], lockHash=consts.LOCK_HASH_R)
+                consts.LOCK_HASH_R = [da.lock_hash for da in R_CHAINS]
+                msg_tmp = dict(signal=config.R_OVER_MARK, r_number=config.CHAIN_NU_LOCAL['R'], lockHash=LOCK_HASH_R)
                 logger.info(f'message content:\n{msg_tmp}')
                 await send_msg(ws, msg_tmp)
 
@@ -353,25 +381,24 @@ async def main_logic_tmp():
                 # logger.info(f'lock_hash_r content:\n{LOCK_HASH_R}')
                 logger.info(f"gen shard chain start:{time.strftime('%X')}")
                 # gen_data_shard_chain_multi(LOCK_HASH_R, msg['s_chain_key'])   #####################################
-                gen_data_shard_chain(consts.LOCK_HASH_R, consts.CHAIN_KEY_S)  # chain_key
+                gen_data_shard_chain(LOCK_HASH_R, CHAIN_KEY_S)  # chain_key
                 logger.info(f"gen shard chain end:{time.strftime('%X')}")
 
                 # send post request
                 logger.info('send s post request ...')
                 # post.send_post_request_multi_threading(consts.S_CHAINS)
-                consts.LOCK_HASH_R.clear()
+                LOCK_HASH_R.clear()
 
                 # gen all lock hash of shard chain
                 logger.info('gen all lock hash of shard chain ...')
-                await gen_lock_hash(consts.S_CHAINS)
+                await gen_lock_hash(S_CHAINS)
 
                 # send ws request with [msg_tmp]
                 logger.info('send message for telling S over ...')
-                consts.LOCK_HASH_S = [da.lock_hash for da in consts.S_CHAINS]
+                consts.LOCK_HASH_S = [da.lock_hash for da in S_CHAINS]
                 msg_tmp = dict(signal=config.S_OVER_MARK, s_number=config.CHAIN_NU_LOCAL['S'])
                 logger.info(f'message content:\n{msg_tmp}')
                 await send_msg(ws, msg_tmp)
-
 
 
 asyncio.get_event_loop().run_until_complete(main_logic_tmp())
