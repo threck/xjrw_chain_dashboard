@@ -14,7 +14,7 @@ from multiprocessing import Pool
 from Common import common
 from Common import mrequest
 from Common import log
-from Stress.Conf import config
+from Stress.Conf import config2 as config
 from Stress.Common import consts
 from Stress.Data import data
 from Stress.Data import gen

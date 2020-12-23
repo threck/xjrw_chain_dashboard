@@ -20,7 +20,7 @@ CPU_NUMBER = 3
 # Chain info
 #####################
 CHAIN_NU_TOTAL = {"R": 4, "S": 8, "B": 1}
-CHAIN_NU_LOCAL = {"R": 2, "S": 4, "B": 1}
+CHAIN_NU_LOCAL = {"R": 2, "S": 4, "B": 0}
 SS_TRADE_NU = 3
 
 #####################
