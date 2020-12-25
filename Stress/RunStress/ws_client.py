@@ -329,7 +329,6 @@ async def main_logic_tmp():
 
     async with websockets.connect(uri) as ws:
         # 发送本地 R|S 数量
-        time.sleep(60)
         msg_tmp = dict(signal='chain_info', chain_nu_local=config.CHAIN_NU_LOCAL)
         await send_msg(ws, msg_tmp)
 

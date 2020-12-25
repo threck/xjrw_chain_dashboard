@@ -6,7 +6,8 @@
 
 header = {"Content-Type": "application/json",
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                        'Chrome/85.0.4183.102 Safari/537.36'}
+                        'Chrome/85.0.4183.102 Safari/537.36',
+           'Connection':'close'}
 
 block_post_data = {
     "type": "B|R|S",  # input value
