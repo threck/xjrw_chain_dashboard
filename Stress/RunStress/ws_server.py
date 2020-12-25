@@ -95,9 +95,8 @@ def count_interval_time():
         logger.info(f'=====> interval time: [ {interval_time} ]')
     return interval_time
 
-async def wait_for_a_interval_time():
+async def wait_for_a_interval_time(interval_time):
     global time_start
-    interval_time = count_interval_time()
     wait_time = config.STRESS_LOOP_INTERVAL - interval_time
     if wait_time >= 0:
         logger.info(f'wait {wait_time}s to start next post wave ...')
@@ -174,6 +173,8 @@ async def main_logic(ws, path):
 
 async def main_logic_tmp(ws, path):
     await register(ws)
+    global s_start_time
+    global s_end_time
     try:
         while True:
             msg = await recv_msg(ws)
@@ -199,16 +200,35 @@ async def main_logic_tmp(ws, path):
                     logger.info(f"detect -> r_ready_number[{consts.R_OVER_NU}] = r_number[{config.CHAIN_NU_TOTAL['R']}]")
                     # send notify for running S post request
                     msg_tmp = dict(signal=config.S_START_MARK)
+                    s_start_time = time.time()
                     await notify_msg(msg_tmp)
                     consts.R_OVER_NU = 0
+
             # 收到 s 结束信号
             elif msg['signal'] == config.S_OVER_MARK:
                 consts.S_OVER_NU += msg['s_number']
                 if consts.S_OVER_NU == config.CHAIN_NU_TOTAL['S']:
+                    s_end_time = time.time()
+                    logger.info(f"all s post nu:{config.CHAIN_NU_TOTAL['S']}")
+                    logger.info(f"all s post spend time:{s_end_time - s_start_time}")
                     msg_notify = dict(signal=config.B_START_MARK, lockHash=consts.LOCK_HASH_R_WS)
                     await notify_msg(msg_notify)
                     consts.LOCK_HASH_R_WS.clear()
                     consts.S_OVER_NU = 0
+
+                    # 配置 B->R->S 运行轮次数
+                    config.STRESS_LOOP_TIME -= 1
+                    if config.STRESS_LOOP_TIME == 0:
+                        logger.info(f'=====> STRESS LOOP : over')
+                        break
+                    elif config.STRESS_LOOP_TIME == -1:
+                        logger.info(f'=====> STRESS LOOP :[run forever]')
+                    else:
+                        logger.info(f'=====> STRESS LOOP LEFT:[{config.STRESS_LOOP_TIME} times]')
+                    # 计算每轮发送耗时
+                    interval = count_interval_time()
+                    if config.STRESS_LOOP_INTERVAL != 0:
+                        await wait_for_a_interval_time(interval)
 
     except Exception as e:
         logger.error(e)

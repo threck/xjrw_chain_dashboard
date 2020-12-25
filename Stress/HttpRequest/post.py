@@ -29,7 +29,7 @@ def send_post(req_data):
     # logger.info(f'post request data: {req_data}')
     resp = request.post_request(api_url, req_data, header)
     logger.info(f'post response data: {resp}')
-    logger.info(f"post response time: {resp['time_consuming']}")
+    # logger.info(f"post response time: {resp['time_consuming']}")
     logger.info('running %s_post over ...' % req_data['type'])
 
 
@@ -70,10 +70,10 @@ def send_post_request_multi_threading(chains):
         chains_tmp = get_muti_threading_chains(copy.deepcopy(chains), config.CPU_NUMBER)
         for da_r in chains_tmp:
             p.apply_async(send_post_request_threading, args=(da_r,))
-    print('Waiting for all post request done...')
+    logger.info('Waiting for all post request done...')
     p.close()
     p.join()
-    print('All post request done.')
+    logger.info('All post request done.')
 
 async def send_post_request(chains):
     if chains:  # asyncio.wait doesn't accept an empty list

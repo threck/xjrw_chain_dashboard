@@ -113,9 +113,9 @@ class Data(object):
         from_key = [ss['fromShard'], ss['fromRelay']]
         to_key = [ss['toShard'], ss['toRelay']]
         dict1 = dict(fromkey=from_key[0], tokey=to_key[1], hash=self._gen_hash())
-        dict2 = dict(fromkey=from_key[1], tokey=to_key[0], hash=self._gen_hash())
-        dict3 = dict(fromkey=from_key[1], tokey=to_key[1], hash=self._gen_hash())
-        return [dict1, dict2, dict3]
+        # dict2 = dict(fromkey=from_key[1], tokey=to_key[0], hash=self._gen_hash())
+        # dict3 = dict(fromkey=from_key[1], tokey=to_key[1], hash=self._gen_hash())
+        return [dict1]
 
     def _gen_upstream_s(self):
         up_stream = []

@@ -9,6 +9,7 @@ import threading
 import websockets
 import json
 import time
+import sys
 import copy
 from multiprocessing import Pool
 from Common import common
@@ -22,7 +23,10 @@ from Stress.Data import templates
 from Stress.HttpRequest import post
 
 logger = log.Log()
-B_NODE = 1
+B_NODE = int(sys.argv[1])
+# B_NODE = 1
+print(f"b node number:{B_NODE}")
+print(f"b node number:{type(B_NODE)}")
 uri = 'ws://%s:%s' % (config.IP, config.PORT)
 
 
@@ -63,7 +67,7 @@ def gen_data_shard_chain(lock_hash_r, s_chain_key):
         for lock_ha in lock_hash_r:
             if lock_ha['chainkey'] == data.data['chainKey'][:2]:
                 data.gen_data([lock_ha], s_chain_key)
-                # logger.info(f'Automatically generate post data:\n{data.data}')
+                logger.info(f'Automatically generate post data:\n{data.data}')
                 # every shard chain has one relay chain only. so do continue.
                 continue
 
@@ -150,19 +154,19 @@ def send_post(req_data):
     # logger.info(f'post request data: {req_data}')
     resp = request.post_request(api_url, req_data, header)
     logger.info(f'post response data: {resp}')
-    logger.info(f"post response time: {resp['time_consuming']}")
+    # logger.info(f"post response time: {resp['time_consuming']}")
     logger.info('running %s_post over ...' % req_data['type'])
 
 
 def send_post_request_threading(chains):
+    logger.info(f'chain threading group: {chains}')
     th = []
-    if chains:
-        for da_r in chains:
-            th.append(threading.Thread(target=send_post, args=(da_r.data,)))
-        for t in th:
-            t.start()
-        for t in th:
-            t.join()
+    for da_r in chains:
+        th.append(threading.Thread(target=send_post, args=(da_r.data,)))
+    for t in th:
+        t.start()
+    for t in th:
+        t.join()
 
 
 def get_muti_threading_chains(chains, group):
@@ -180,19 +184,35 @@ def get_muti_threading_chains(chains, group):
     return chains_list
 
 
-def send_post_request_multi_threading(chains):
+def send_post_request_multi_threading_tmp(chains, type):
     p = Pool(config.CPU_NUMBER)
+    logger.info(f'prepare {type} chain muti process')
     if len(chains) <= config.CPU_NUMBER:
+        logger.info(f'-- {type} chain process group: {chains}')
         for da_r in chains:
             p.apply_async(send_post, args=(da_r.data,))
     else:
         chains_tmp = get_muti_threading_chains(chains, config.CPU_NUMBER)
+        logger.info(f'{type} chain process pool: {chains_tmp}')
         for da_r in chains_tmp:
+            logger.info(f'create {type} chain process group: {da_r}')
             p.apply_async(send_post_request_threading, args=(da_r,))
-    print('Waiting for all post request done...')
+            logger.info(f'create {type} chain process group over: {da_r}')
+    logger.info(f'Waiting for all {type} post request done... nu: {len(chains)}')
     p.close()
     p.join()
-    print('All post request done.')
+    logger.info(f'All {type} post request done.')
+
+def send_post_request_multi_threading(chains, type):
+    p = Pool(config.CPU_NUMBER)
+    logger.info(f'prepare {type} chain muti process')
+    logger.info(f'-- {type} chain process group: {chains}')
+    for da_r in chains:
+        p.apply_async(send_post, args=(da_r.data,))
+    logger.info(f'Waiting for all {type} post request done... nu: {len(chains)}')
+    p.close()
+    p.join()
+    logger.info(f'All {type} post request done.')
 
 
 # 客户端主逻辑
@@ -287,7 +307,7 @@ async def main_logic():
 
                 # send post request
                 logger.info('send s post request ...')
-                #post.send_post_request_multi_threading(S_CHAINS)
+                post.send_post_request_multi_threading(S_CHAINS)
                 # await send_post_request(S_CHAINS)
                 LOCK_HASH_R.clear()
 
@@ -306,8 +326,10 @@ async def main_logic_tmp():
     global LOCK_HASH_R
     global LOCK_HASH_S
     global B_NODE
+
     async with websockets.connect(uri) as ws:
         # 发送本地 R|S 数量
+        time.sleep(60)
         msg_tmp = dict(signal='chain_info', chain_nu_local=config.CHAIN_NU_LOCAL)
         await send_msg(ws, msg_tmp)
 
@@ -365,7 +387,7 @@ async def main_logic_tmp():
                 # send post request
                 logger.info('send r post request ...')
                 logger.debug(f"R_CHAINS: {R_CHAINS}")
-                # send_post_request_multi_threading(R_CHAINS)
+                send_post_request_multi_threading(R_CHAINS, 'R')
                 LOCK_HASH_S.clear()
                 lock_hash_b.clear()
 
@@ -390,7 +412,13 @@ async def main_logic_tmp():
 
                 # send post request
                 logger.info('send s post request ...')
-                # post.send_post_request_multi_threading(consts.S_CHAINS)
+                s_start_time = time.time()
+                send_post_request_multi_threading(S_CHAINS, 'S')
+                s_end_time = time.time()
+                s_interval_time = s_end_time - s_start_time
+                s_number = len(S_CHAINS)
+                logger.info(f'all s post nu:{s_number}')
+                logger.info(f'all s post spend time:{s_interval_time}s')
                 LOCK_HASH_R.clear()
 
                 # gen all lock hash of shard chain
