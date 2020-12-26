@@ -125,45 +125,45 @@ class Data(object):
         return up_stream
 
     def _gen_upstream_r(self, chain_keys_r):
-        trade_nu = 200
+        trade_nu = 20
         rr_trans = []
         from_relay = '%s%s' % (self.data['type'], self.data['chainKey'])
         for i in range(trade_nu):
             to_relay_nu = random.randint(0, len(chain_keys_r) - 1)
             to_relay = chain_keys_r[to_relay_nu]
-            tr = dict(fromkey='S%s' % from_relay, tokey='S%s' % to_relay)
+            tr = dict(fromkey='%s' % from_relay, tokey='R%s' % to_relay)
             if tr not in rr_trans:
-                rr_trans.append(dict(fromkey='S%s' % from_relay, tokey='S%s' % to_relay))
+                rr_trans.append(dict(fromkey='%s' % from_relay, tokey='R%s' % to_relay))
         for tr in rr_trans:
             tr['hash'] = self._gen_hash()
         return rr_trans
 
     def _gen_downstream_r(self, chain_keys_s):
-        trade_nu = 200
+        trade_nu = 20
         rs_trans = []
         from_relay = '%s%s' % (self.data['type'], self.data['chainKey'])
         for i in range(trade_nu):
             to_shard_nu = random.randint(0, len(chain_keys_s) - 1)
             to_shard = chain_keys_s[to_shard_nu]
-            tr = dict(fromkey='S%s' % from_relay, tokey='S%s' % to_shard)
+            tr = dict(fromkey='%s' % from_relay, tokey='S%s' % to_shard)
             if tr not in rs_trans:
-                rs_trans.append(dict(fromkey='S%s' % from_relay, tokey='S%s' % to_shard))
+                rs_trans.append(dict(fromkey='%s' % from_relay, tokey='S%s' % to_shard))
         for tr in rs_trans:
             tr['hash'] = self._gen_hash()
         return rs_trans
 
 
     def _gen_downstream_b(self, chain_keys_r):
-        trade_nu = 200
+        trade_nu = 20
         r_trans = []
         for i in range(trade_nu):
             from_relay_nu = random.randint(0, len(chain_keys_r) - 1)
             to_relay_nu = random.randint(0, len(chain_keys_r) - 1)
             from_relay = chain_keys_r[from_relay_nu]
             to_relay = chain_keys_r[to_relay_nu]
-            tr = dict(fromkey='S%s' % from_relay, tokey='S%s' % to_relay)
+            tr = dict(fromkey='R%s' % from_relay, tokey='R%s' % to_relay)
             if tr not in r_trans:
-                r_trans.append(dict(fromkey='S%s' % from_relay, tokey='S%s' % to_relay))
+                r_trans.append(dict(fromkey='R%s' % from_relay, tokey='R%s' % to_relay))
         for tr in r_trans:
             tr['hash'] = self._gen_hash()
         return r_trans

@@ -7,14 +7,14 @@
 #####################
 # Server info
 #####################
-# IP = "192.168.1.19"
-IP = "172.16.8.106"
+IP = "192.168.1.16"
+# IP = "172.16.8.106"
 PORT = 5678
 # POST_URL = 'http://192.168.0.164:8888/api/v1.0/block'
 # POST_URL = 'http://172.70.16.105:8899/api/v1.0/block'
-# POST_URL = 'http://127.0.0.1:8888/api/v1.0/block'
+POST_URL = 'http://127.0.0.1:8888/api/v1.0/block'
 # POST_URL = 'http://192.168.1.21:8899/api/v1.0/block'
-POST_URL = 'http://172.16.7.182:8899/api/v1.0/block'
+# POST_URL = 'http://172.16.7.182:8899/api/v1.0/block'
 # CPU_NUMBER = 3
 CPU_NUMBER = 64
 

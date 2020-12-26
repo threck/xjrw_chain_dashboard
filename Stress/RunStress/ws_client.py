@@ -63,11 +63,11 @@ def create_s_chain(s_chain_key):
         S_CHAINS.append(da_s)
 
 
-def gen_data_shard_chain(lock_hash_r, s_chain_key, chain_keys_r, chain_keys_s):
+def gen_data_shard_chain(lock_hash_r, chain_keys_r, chain_keys_s, chain_key_s):
     for data in S_CHAINS:
         for lock_ha in lock_hash_r:
             if lock_ha['chainkey'] == data.data['chainKey'][:2]:
-                data.gen_data([lock_ha], chain_keys_r, chain_keys_s, s_chain_key)
+                data.gen_data([lock_ha], chain_keys_r, chain_keys_s, chain_key_s)
                 logger.info(f'Automatically generate post data:\n{data.data}')
                 # every shard chain has one relay chain only. so do continue.
                 continue
