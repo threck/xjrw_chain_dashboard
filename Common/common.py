@@ -23,7 +23,10 @@ def current_time_iso(tz=None):
 
 
 def isostr_to_datetime(str):
-    return datetime.strptime(str, '%Y-%m-%dT%H:%M:%S.%f%z')
+    if str.find('.') != -1:
+        return datetime.strptime(str, '%Y-%m-%dT%H:%M:%S.%f%z')
+    else:
+        return datetime.strptime(str, '%Y-%m-%dT%H:%M:%S%z')
     # .timestamp()
     # datetime.strptime(str, '%Y-%m-%dT%H:%M:%S.%f%z')
 

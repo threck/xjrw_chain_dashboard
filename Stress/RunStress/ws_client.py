@@ -43,7 +43,8 @@ CHAIN_KEY_S = []
 # R|S lock hash
 LOCK_HASH_S = []
 LOCK_HASH_R = []
-
+# R|S upstream
+S_UP_STREAM = []
 
 
 def create_r_chain(r_chain_key):
@@ -62,11 +63,11 @@ def create_s_chain(s_chain_key):
         S_CHAINS.append(da_s)
 
 
-def gen_data_shard_chain(lock_hash_r, s_chain_key):
+def gen_data_shard_chain(lock_hash_r, s_chain_key, chain_keys_r, chain_keys_s):
     for data in S_CHAINS:
         for lock_ha in lock_hash_r:
             if lock_ha['chainkey'] == data.data['chainKey'][:2]:
-                data.gen_data([lock_ha], s_chain_key)
+                data.gen_data([lock_ha], chain_keys_r, chain_keys_s, s_chain_key)
                 logger.info(f'Automatically generate post data:\n{data.data}')
                 # every shard chain has one relay chain only. so do continue.
                 continue
@@ -104,7 +105,7 @@ def gen_data_relay_chain_multi(lock_hash_s, lock_hash_b):
     p.join()
 
 
-def gen_data_relay_chain(lock_hash_s, lock_hash_b):
+def gen_data_relay_chain(lock_hash_s, lock_hash_b, chain_keys_r, chain_keys_s):
     for data in R_CHAINS:
         lock_hash = []
         if lock_hash_s != []:
@@ -114,7 +115,7 @@ def gen_data_relay_chain(lock_hash_s, lock_hash_b):
             lock_hash.extend(lock_hash_b)
         else:
             lock_hash = lock_hash_b
-        data.gen_data(lock_hash)
+        data.gen_data(lock_hash, chain_keys_r, chain_keys_s)
         logger.debug(f'R_CHAINS now:\n{R_CHAINS}')
         logger.debug(f'lock_hash now:\n{lock_hash}')
         del lock_hash
@@ -130,7 +131,6 @@ async def gen_data(chains, lock_hash):
 async def gen_lock_hash(chains):
     if chains:  # asyncio.wait doesn't accept an empty list
         await asyncio.wait([da.gen_lock_hash() for da in chains])
-
 
 async def send_msg(ws, msg):
     # print(f'send msg: {msg}')
@@ -244,7 +244,7 @@ async def main_logic():
         if B_NODE == 1:
             logger.info('prepare BEACON chain post request data ...')
             da_b = data.Data('B', '', '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBfBqb01')
-            da_b.gen_data(LOCK_HASH_R)
+            da_b.gen_data(LOCK_HASH_R, chain_keys_r)
             post.send_post(da_b.data)
             await da_b.gen_lock_hash()
             msg_tmp = dict(signal=config.B_OVER_MARK, lockHash=[da_b.lock_hash])
@@ -262,7 +262,7 @@ async def main_logic():
                 # if config.CHAIN_NU_LOCAL['B'] == 1:
                 if B_NODE == 1:
                     logger.info('prepare BEACON chain post request data ...')
-                    da_b.gen_data(msg['lockHash'])
+                    da_b.gen_data(msg['lockHash'], chain_keys_r)
                     post.send_post(da_b.data)
                     await da_b.gen_lock_hash()
                     msg_tmp = dict(signal=config.B_OVER_MARK, lockHash=[da_b.lock_hash])
@@ -274,7 +274,7 @@ async def main_logic():
                 lock_hash_b = msg['lockHash']
                 logger.info(f"gen relay chain start:{time.strftime('%X')}")
                 start_time = time.time()
-                gen_data_relay_chain(LOCK_HASH_S, lock_hash_b)
+                gen_data_relay_chain(LOCK_HASH_S, lock_hash_b, chain_keys_r, chain_keys_s)
                 end_time = time.time()
                 logger.info(f"====> R gen spend time:{end_time - start_time}")
                 logger.info(f"gen relay chain end:{time.strftime('%X')}")
@@ -307,7 +307,7 @@ async def main_logic():
                 # logger.info(f'lock_hash_r content:\n{LOCK_HASH_R}')
                 logger.info(f"gen shard chain start:{time.strftime('%X')}")
                 start_time = time.time()
-                gen_data_shard_chain(LOCK_HASH_R, CHAIN_KEY_S)  # chain_key
+                gen_data_shard_chain(LOCK_HASH_R, chain_keys_r, chain_keys_s, CHAIN_KEY_S)  # chain_key
                 end_time = time.time()
                 logger.info(f"=====> S gen spend time:{end_time - start_time}")
                 logger.info(f"gen shard chain end:{time.strftime('%X')}")
@@ -325,13 +325,13 @@ async def main_logic():
                 # gen all lock hash of shard chain
                 logger.info('gen all lock hash of shard chain ...')
                 await gen_lock_hash(S_CHAINS)
-
-                # send ws request with [msg_tmp]
+                # save
+                # ws send: s_over_mark, s_number, r_upstream
                 logger.info('send message for telling S over ...')
                 LOCK_HASH_S = [da.lock_hash for da in S_CHAINS]
-                msg_tmp = dict(signal=config.S_OVER_MARK, s_number=config.CHAIN_NU_LOCAL['S'])
+                msg_tmp = dict(signal=config.S_OVER_MARK, s_number=config.CHAIN_NU_LOCAL['S'], r_downstream='')
                 logger.info(f'message content:\n{msg_tmp}')
                 await send_msg(ws, msg_tmp)
 
-
+chain_keys_r, chain_keys_s = gen.create_r_and_s_chain_key(config.CHAIN_NU_TOTAL)
 asyncio.get_event_loop().run_until_complete(main_logic())

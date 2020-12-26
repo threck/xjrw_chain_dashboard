@@ -112,28 +112,63 @@ class Data(object):
     def _gen_ss_up_info(self, ss):
         from_key = [ss['fromShard'], ss['fromRelay']]
         to_key = [ss['toShard'], ss['toRelay']]
-        dict1 = dict(fromkey=from_key[0], tokey=to_key[1], hash=self._gen_hash())
-        # dict2 = dict(fromkey=from_key[1], tokey=to_key[0], hash=self._gen_hash())
-        # dict3 = dict(fromkey=from_key[1], tokey=to_key[1], hash=self._gen_hash())
-        return [dict1]
-
-    def _gen_upstream_r(self):
-        pass
+        dict1 = dict(fromkey=from_key[0], tokey=to_key[1])
+        return dict1
 
     def _gen_upstream_s(self):
         up_stream = []
         for ss in self.data['detail']['ss']:
-            up_stream.extend(self._gen_ss_up_info(ss))
+            if ss not in up_stream:
+                up_stream.append(self._gen_ss_up_info(ss))
+        for s in up_stream:
+            s['hash'] = self._gen_hash()
         return up_stream
 
-    def _gen_downstream_b(self):
-        pass
+    def _gen_upstream_r(self, chain_keys_r):
+        trade_nu = 200
+        rr_trans = []
+        from_relay = '%s%s' % (self.data['type'], self.data['chainKey'])
+        for i in range(trade_nu):
+            to_relay_nu = random.randint(0, len(chain_keys_r) - 1)
+            to_relay = chain_keys_r[to_relay_nu]
+            tr = dict(fromkey='S%s' % from_relay, tokey='S%s' % to_relay)
+            if tr not in rr_trans:
+                rr_trans.append(dict(fromkey='S%s' % from_relay, tokey='S%s' % to_relay))
+        for tr in rr_trans:
+            tr['hash'] = self._gen_hash()
+        return rr_trans
 
-    def _gen_downstream_r(self):
-        pass
+    def _gen_downstream_r(self, chain_keys_s):
+        trade_nu = 200
+        rs_trans = []
+        from_relay = '%s%s' % (self.data['type'], self.data['chainKey'])
+        for i in range(trade_nu):
+            to_shard_nu = random.randint(0, len(chain_keys_s) - 1)
+            to_shard = chain_keys_s[to_shard_nu]
+            tr = dict(fromkey='S%s' % from_relay, tokey='S%s' % to_shard)
+            if tr not in rs_trans:
+                rs_trans.append(dict(fromkey='S%s' % from_relay, tokey='S%s' % to_shard))
+        for tr in rs_trans:
+            tr['hash'] = self._gen_hash()
+        return rs_trans
 
-    def _gen_data_public(self, lock_hash, s_chain_key=None):
-        self.shard_list = copy.deepcopy(s_chain_key)
+
+    def _gen_downstream_b(self, chain_keys_r):
+        trade_nu = 200
+        r_trans = []
+        for i in range(trade_nu):
+            from_relay_nu = random.randint(0, len(chain_keys_r) - 1)
+            to_relay_nu = random.randint(0, len(chain_keys_r) - 1)
+            from_relay = chain_keys_r[from_relay_nu]
+            to_relay = chain_keys_r[to_relay_nu]
+            tr = dict(fromkey='S%s' % from_relay, tokey='S%s' % to_relay)
+            if tr not in r_trans:
+                r_trans.append(dict(fromkey='S%s' % from_relay, tokey='S%s' % to_relay))
+        for tr in r_trans:
+            tr['hash'] = self._gen_hash()
+        return r_trans
+
+    def _gen_data_public(self, lock_hash):
         if self.data['hash'] == '':
             self.data['father'] = ''
         else:
@@ -152,7 +187,7 @@ class Data(object):
             self.data['time'] = now
         self.data['lockHash'] = lock_hash
 
-    def _gen_data_b(self):
+    def _gen_data_b(self, chain_keys_r):
         # generated dynamically(get from config file)
         if self.data['height'] == 0:
             self.data['trans'] = 0
@@ -160,6 +195,7 @@ class Data(object):
             self.data['trans'] = config.SS_TRADE_NU * config.CHAIN_NU_TOTAL["S"]
         # upStream and downStream:
         self.data['detail']['upStream'] = []
+        self.data['detail']['downStream'] = self._gen_downstream_b(chain_keys_r)
         self.data['detail']['ss'] = []
         # B|R: have downHash, don't have upHash
         self.data['downHash'] = self._gen_hash()
@@ -168,20 +204,21 @@ class Data(object):
         # gen size after all
         self.data['size'] = sys.getsizeof(str(self.data)) + 1024 * 3
 
-    def _gen_data_r(self):
+    def _gen_data_r(self, chain_keys_r, chain_keys_s):
         # generated dynamically(get from config file)
         if self.data['height'] == 0:
             self.data['trans'] = 0
         else:
             self.data['trans'] = config.SS_TRADE_NU * int(config.CHAIN_NU_LOCAL["S"] / config.CHAIN_NU_LOCAL["R"])
         self.data['detail']['ss'] = []
-        # S|R: have upHash
+        self.data['detail']['upStream'] = self._gen_upstream_r(chain_keys_r)
+        self.data['detail']['downStream'] = self._gen_downstream_r(chain_keys_s)
         self.data['upHash'] = self._gen_hash()
-        # B|R: have downHash, don't have upHash
         self.data['downHash'] = self._gen_hash()
         self.data['size'] = sys.getsizeof(str(self.data)) + 1024 * 3
 
-    def _gen_data_s(self):
+    def _gen_data_s(self, s_chain_key):
+        self.shard_list = copy.deepcopy(s_chain_key)
         # generated dynamically(get from config file)
         self.data['trans'] = config.SS_TRADE_NU
 
@@ -197,14 +234,14 @@ class Data(object):
         self.data['downHash'] = ""
         self.data['size'] = sys.getsizeof(str(self.data)) + 1024 * 3
 
-    def gen_data(self, lock_hash, s_chain_key=None):
-        self._gen_data_public(lock_hash, s_chain_key)
+    def gen_data(self, lock_hash, chain_keys_r=None, chain_keys_s=None, chain_key_s=None):
+        self._gen_data_public(lock_hash)
         if self.data['type'] == 'B':
-            self._gen_data_b()
+            self._gen_data_b(chain_keys_r)
         elif self.data['type'] == 'R':
-            self._gen_data_r()
+            self._gen_data_r(chain_keys_r, chain_keys_s)
         elif self.data['type'] == 'S':
-            self._gen_data_s()
+            self._gen_data_s(chain_key_s)
         logger.debug(f'Automatically generate data:\n{self.data}')
 
     async def gen_lock_hash(self):
