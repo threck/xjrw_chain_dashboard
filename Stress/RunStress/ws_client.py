@@ -217,112 +217,6 @@ def send_post_request_multi_threading(chains, type):
 
 # 客户端主逻辑
 async def main_logic():
-    async with websockets.connect(uri) as ws:
-        # 发送本地 R|S 数量
-        msg_tmp = dict(signal='chain_info', chain_nu_r=4, chain_nu_s=16, chain_nu_b=1)
-        await send_msg(ws, msg_tmp)
-        # 接收 ws 返回的 chainkey
-        while True:
-            msg = await recv_msg(ws)
-            if msg['signal'] == 'chain_info':
-                consts.CHAIN_KEY_R = msg['chain_key_r']
-                consts.CHAIN_KEY_S = msg['chain_key_s']
-                break
-        logger.info(f'get chain_info from ws, content is:\n{msg} ...')
-        # 生成 R|S 初始链数据
-        logger.info('create r_chain and s_chain according r_chain_key now ...')
-        gen.create_r_chain(consts.CHAIN_KEY_R)
-        gen.create_s_chain(consts.CHAIN_KEY_S)
-
-        # # 发送本地 R|S 数量
-        # msg_tmp = dict(signal='chain_info', chain_nu_r=4, chain_nu_s=16, chain_nu_b=1)
-        # await send_msg(ws, msg_tmp)
-        # while True:
-        #     msg = await recv_msg(ws)
-        #     if msg['signal'] == 'chain_info':
-        #         r_chain_key = msg['r_chain_key']
-        #         break
-        # logger.info(f'get chain_info from ws, content is:\n{msg} ...')
-        #
-        # # create r_chain and s_chain according r_chain_key now
-        # logger.info('create r_chain and s_chain according r_chain_key now ...')
-        # gen.create_relay_and_shard_chain(r_chain_key)
-
-        # send r_chain_key to ws server
-        #msg_tmp = dict(signal='chain_info', r_chain_key=R_CHAIN_KEY, s_chain_key=S_CHAIN_KEY)
-        msg_tmp = dict(signal='chain_info', r_chain_key=consts.CHAIN_KEY_R)
-        logger.info(f'send chain_info to ws, content is:\n{msg_tmp} ...')
-        await send_msg(ws, msg_tmp)
-        await recv_msg(ws)
-
-        # send b_start signal ...
-        logger.info('send b_start signal ...')
-        msg_tmp = dict(signal='b_start', s_number=config.CHAIN_NU_LOCAL['S'])
-        await send_msg(ws, msg_tmp)
-        while True:
-            print('into while loop...')
-            msg = await recv_msg(ws)
-            # print(common.current_time_iso())
-            if msg['signal'] == 'notify':
-                pass
-            if msg['signal'] == 'r_start':
-                # prepare RELAY chain post request data
-                logger.info('prepare RELAY chain post request data ...')
-                lock_hash_b = msg['lockHash']
-                if 'LOCK_HASH_S' not in locals():
-                    LOCK_HASH_S = []
-                # logger.info(f'lock_hash_b content:\n{lock_hash_b}')
-                # logger.info(f'lock_hash_s content:\n{LOCK_HASH_S}')
-                logger.info(f"gen relay chain start:{time.strftime('%X')}")
-                gen_data_relay_chain(LOCK_HASH_S, lock_hash_b)
-                logger.info(f"gen relay chain end:{time.strftime('%X')}")
-                # # await gen_data(R_CHAINS, lock_hash)
-
-                # send post request
-                logger.info('send r post request ...')
-                # await send_post_request(R_CHAINS)
-                #post.send_post_request_multi_threading(R_CHAINS)
-                LOCK_HASH_S.clear()
-                lock_hash_b.clear()
-
-                # gen all lock hash of relay chain
-                logger.info('gen all lock hash of relay chain ...')
-                await gen_lock_hash(consts.R_CHAINS)
-
-                # send ws request with [msg_tmp]
-                logger.info('send message for telling R over ...')
-                LOCK_HASH_R = [da.lock_hash for da in consts.R_CHAINS]
-                msg_tmp = dict(signal=config.R_OVER_MARK, r_number=config.CHAIN_NU_LOCAL['R'], lockHash=LOCK_HASH_R)
-                logger.info(f'message content:\n{msg_tmp}')
-                await send_msg(ws, msg_tmp)
-
-            if msg['signal'] == 's_start':
-                # prepare SHARD chain post request data
-                logger.info('prepare SHARD chain post request data ...')
-                # logger.info(f'lock_hash_r content:\n{LOCK_HASH_R}')
-                logger.info(f"gen shard chain start:{time.strftime('%X')}")
-                # gen_data_shard_chain_multi(LOCK_HASH_R, msg['s_chain_key'])   #####################################
-                gen_data_shard_chain(LOCK_HASH_R, consts.CHAIN_KEY_S)  # chain_key
-                logger.info(f"gen shard chain end:{time.strftime('%X')}")
-
-                # send post request
-                logger.info('send s post request ...')
-                post.send_post_request_multi_threading(S_CHAINS)
-                # await send_post_request(S_CHAINS)
-                LOCK_HASH_R.clear()
-
-                # gen all lock hash of shard chain
-                logger.info('gen all lock hash of shard chain ...')
-                await gen_lock_hash(consts.S_CHAINS)
-
-                # send ws request with [msg_tmp]
-                logger.info('send message for telling S over ...')
-                LOCK_HASH_S = [da.lock_hash for da in consts.S_CHAINS]
-                msg_tmp = dict(signal=config.S_OVER_MARK, s_number=config.CHAIN_NU_LOCAL['S'])
-                logger.info(f'message content:\n{msg_tmp}')
-                await send_msg(ws, msg_tmp)
-
-async def main_logic_tmp():
     global LOCK_HASH_R
     global LOCK_HASH_S
     global B_NODE
@@ -379,14 +273,20 @@ async def main_logic_tmp():
                 logger.info('prepare RELAY chain post request data ...')
                 lock_hash_b = msg['lockHash']
                 logger.info(f"gen relay chain start:{time.strftime('%X')}")
+                start_time = time.time()
                 gen_data_relay_chain(LOCK_HASH_S, lock_hash_b)
+                end_time = time.time()
+                logger.info(f"====> R gen spend time:{end_time - start_time}")
                 logger.info(f"gen relay chain end:{time.strftime('%X')}")
                 # # await gen_data(R_CHAINS, lock_hash)
 
                 # send post request
                 logger.info('send r post request ...')
                 logger.debug(f"R_CHAINS: {R_CHAINS}")
+                start_time = time.time()
                 send_post_request_multi_threading(R_CHAINS, 'R')
+                end_time = time.time()
+                logger.info(f"====> R post spend time:{end_time - start_time}")
                 LOCK_HASH_S.clear()
                 lock_hash_b.clear()
 
@@ -406,18 +306,20 @@ async def main_logic_tmp():
                 logger.info('prepare SHARD chain post request data ...')
                 # logger.info(f'lock_hash_r content:\n{LOCK_HASH_R}')
                 logger.info(f"gen shard chain start:{time.strftime('%X')}")
+                start_time = time.time()
                 gen_data_shard_chain(LOCK_HASH_R, CHAIN_KEY_S)  # chain_key
+                end_time = time.time()
+                logger.info(f"=====> S gen spend time:{end_time - start_time}")
                 logger.info(f"gen shard chain end:{time.strftime('%X')}")
 
                 # send post request
                 logger.info('send s post request ...')
-                s_start_time = time.time()
+                start_time = time.time()
                 send_post_request_multi_threading(S_CHAINS, 'S')
-                s_end_time = time.time()
-                s_interval_time = s_end_time - s_start_time
+                end_time = time.time()
+                logger.info(f"=====> S post spend time:{end_time - start_time}")
                 s_number = len(S_CHAINS)
                 logger.info(f'all s post nu:{s_number}')
-                logger.info(f'all s post spend time:{s_interval_time}s')
                 LOCK_HASH_R.clear()
 
                 # gen all lock hash of shard chain
@@ -432,4 +334,4 @@ async def main_logic_tmp():
                 await send_msg(ws, msg_tmp)
 
 
-asyncio.get_event_loop().run_until_complete(main_logic_tmp())
+asyncio.get_event_loop().run_until_complete(main_logic())

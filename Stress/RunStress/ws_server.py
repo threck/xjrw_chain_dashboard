@@ -92,7 +92,7 @@ def count_interval_time():
         interval_time = interval.seconds + interval.microseconds*0.000001
         time_start = time_end
         logger.info(f'=====> end time: [ {time_end_tmp} ]')
-        logger.info(f'=====> interval time: [ {interval_time} ]')
+        logger.info(f'=====> all interval time: [ {interval_time} ]')
     return interval_time
 
 async def wait_for_a_interval_time(interval_time):
@@ -105,73 +105,6 @@ async def wait_for_a_interval_time(interval_time):
 
 # 服务器端主逻辑
 async def main_logic(ws, path):
-    await register(ws)
-    global r_ready_number
-    global s_ready_number
-    global time_start
-    try:
-        while True:
-            msg = await recv_msg(ws)
-            if msg['signal'] == 'chain_info':
-                R_CHAIN_KEYS.extend(msg['r_chain_key'])
-                msg_tmp = dict(signal='chain_info', r_chain_key=R_CHAIN_KEYS)
-                await notify_msg(msg_tmp)
-            if msg['signal'] == 'b_start' or msg['signal'] == config.S_OVER_MARK:
-                s_ready_number += msg['s_number']
-                if s_ready_number == s_number:
-                    # loop time control logic.
-                    config.STRESS_LOOP_TIME -= 1
-                    if config.STRESS_LOOP_TIME == 0:
-                        logger.info(f'=====> STRESS LOOP : over')
-                        break
-                    elif config.STRESS_LOOP_TIME == -1:
-                        logger.info(f'=====> STRESS LOOP :[run forever]')
-                    else:
-                        logger.info(f'=====> STRESS LOOP LEFT:[{config.STRESS_LOOP_TIME} times]')
-                    logger.info(f'detect -> s_ready_number[{s_ready_number}] = s_number[{s_number}]')
-                    # prepare BEACON chain post request data
-                    logger.info('prepare BEACON chain post request data ...')
-                    da_b.gen_data(lock_hash_r)
-                    logger.info(f'Automatically generate post data:{da_b.data}')
-
-                    # send post request
-                    logger.info(f'send b post request ...')
-                    print(f'detect S chain {s_ready_number} post over')
-                    if config.STRESS_LOOP_INTERVAL != 0:
-                        await wait_for_a_interval_time()
-                    #post.send_post(da_b.data)
-                    lock_hash_r.clear()
-
-                    # send notify for running R post request (contains B_chain's and S_chain's lock_hash)
-                    await da_b.gen_lock_hash()
-                    msg_tmp = dict(signal='r_start', lockHash=da_b.lock_hash)
-                    await notify_msg(msg_tmp)
-                    r_ready_number, s_ready_number = 0, 0
-            elif msg['signal'] == config.B_OVER_MARK:
-                msg_tmp = dict(signal='r_start', lockHash='')
-                msg_tmp = json.dumps(msg_tmp).encode('utf-8')
-                await notify_msg(msg_tmp)
-            elif msg['signal'] == config.R_OVER_MARK:
-                r_ready_number += msg['r_number']
-                # collect lock_hash for next post data of B chain
-                logger.info(f"r ready, recv lockHash_r: {msg['lockHash']}")
-                lock_hash_r.extend(msg['lockHash'])
-                logger.info(f"create new lockHash_r: {lock_hash_r}")
-
-                if r_ready_number == r_number:
-                    logger.info(f'detect -> r_ready_number[{r_ready_number}] = r_number[{r_number}]')
-                    # send notify for running S post request
-                    msg_tmp = dict(signal='s_start')
-                    await notify_msg(msg_tmp)
-                    r_ready_number, s_ready_number = 0, 0
-    except Exception as e:
-        logger.error(e)
-    finally:
-        await unregister(ws)
-
-
-
-async def main_logic_tmp(ws, path):
     await register(ws)
     global s_start_time
     global s_end_time
@@ -242,7 +175,7 @@ def main():
     # mg.clear_mongo_database()
 
     # start websocket server
-    start_server = websockets.serve(main_logic_tmp, config.IP, config.PORT)
+    start_server = websockets.serve(main_logic, config.IP, config.PORT)
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()
 

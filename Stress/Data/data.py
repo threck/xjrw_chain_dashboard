@@ -117,11 +117,20 @@ class Data(object):
         # dict3 = dict(fromkey=from_key[1], tokey=to_key[1], hash=self._gen_hash())
         return [dict1]
 
+    def _gen_upstream_r(self):
+        pass
+
     def _gen_upstream_s(self):
         up_stream = []
         for ss in self.data['detail']['ss']:
             up_stream.extend(self._gen_ss_up_info(ss))
         return up_stream
+
+    def _gen_downstream_b(self):
+        pass
+
+    def _gen_downstream_r(self):
+        pass
 
     def _gen_data_public(self, lock_hash, s_chain_key=None):
         self.shard_list = copy.deepcopy(s_chain_key)
