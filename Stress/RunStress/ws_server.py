@@ -6,24 +6,14 @@
 
 import asyncio
 import websockets
-import socket
 import time
-import sys
-import random
 import json
 
 from datetime import datetime
-
-from Common import common
-from Common import mrequest
 from Common import log
-
-from Stress.Data import templates
-from Stress.Data import data
 from Stress.Data import gen
 from Stress.Conf import config
 from Stress.Common import consts
-from Stress.HttpRequest import post
 
 
 

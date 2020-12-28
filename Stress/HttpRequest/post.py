@@ -6,15 +6,10 @@
 
 import asyncio
 import threading
-import websockets
-import json
-import time
 import copy
 from Stress.Conf import config
-from Common import common
 from Common import mrequest
 from Common import log
-from Stress.Data import data
 from Stress.Data import templates
 from multiprocessing import Pool
 

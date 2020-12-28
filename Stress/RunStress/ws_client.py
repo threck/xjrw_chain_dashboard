@@ -10,13 +10,10 @@ import websockets
 import json
 import time
 import sys
-import copy
 from multiprocessing import Pool
-from Common import common
 from Common import mrequest
 from Common import log
 from Stress.Conf import config
-from Stress.Common import consts
 from Stress.Data import data
 from Stress.Data import gen
 from Stress.Data import templates
@@ -98,8 +95,6 @@ def gen_data_relay_chain_multi(lock_hash_s, lock_hash_b):
         else:
             lock_hash = lock_hash_b
         p.apply_async(data.gen_data, args=(lock_hash,))
-        # logger.info(f'R_CHAINS now:\n{R_CHAINS}')
-        # logger.info(f'lock_hash now:\n{lock_hash}')
         del lock_hash
     p.close()
     p.join()

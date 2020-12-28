@@ -33,30 +33,5 @@ block_post_data = {
             {"fromkey": "R03", "tokey": "S0102", "hash": "HRctoSa2"},  # S: None
             {"fromkey": "R01", "tokey": "S0101", "hash": "HRatoSa1"}],
         "ss": []
-        # "ss": [  # S: generated dynamically;  B|R: None
-        #     {
-        #         "fromShard": "S0101",
-        #         "toShard": "S0102",
-        #         "fromRelay": "R01",
-        #         "toRelay": "R01",
-        #         "hash": "0x9fe109fec8b1751e4fae65e2bbaa6a31c580bac257436c43800a12f4217bss01",
-        #         "trans": [
-        #             {"hash": "0x9fe109fec8b1751e4fae65e2bbaa6a31c580bac257436c43800a1ss01trans01",
-        #              "from": "wallet_S0101_1", "to": "wallet_S0102_1", "amount": "1"},
-        #             {"hash": "0x9fe109fec8b1751e4fae65e2bbaa6a31c580bac257436c43800a1ss01trans02",
-        #              "from": "wallet_S0101_1", "to": "wallet_S0102_2", "amount": "1"}
-        #         ]},
-        #     {
-        #         "fromShard": "S0101",
-        #         "toShard": "S0201",
-        #         "fromRelay": "R01",
-        #         "toRelay": "R02",
-        #         "hash": "0x9fe109fec8b1751e4fae65e2bbaa6a31c580bac257436c43800a12f4217bss02",
-        #         "trans": [
-        #             {"hash": "0x9fe109fec8b1751e4fae65e2bbaa6a31c580bac257436c43800a1ss02trans01",
-        #              "from": "wallet_S0101_1", "to": "wallet_S0201_1", "amount": "2"},
-        #             {"hash": "0x9fe109fec8b1751e4fae65e2bbaa6a31c580bac257436c43800a1ss02trans02",
-        #              "from": "wallet_S0101_1", "to": "wallet_S0201_2", "amount": "2"}
-        #         ]}, ]
     }
 }
