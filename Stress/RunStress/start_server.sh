@@ -1,2 +1,5 @@
 export PYTHONPATH=/home/fangchao/xjrw_chain_dashboard
-python ws_server.py
+log=tmp/ws_server.log
+rm -rf ${log}
+nohup python ws_server.py &> ${log} &
+echo ws_server_pid:$!

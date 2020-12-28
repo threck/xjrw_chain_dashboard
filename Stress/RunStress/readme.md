@@ -1,8 +1,9 @@
 # API_Automation_Test
 
 ## need to install some libraries:
-pip install pytest pytest-html allure-pytest pymongo requests requests-toolbelt websocket-client
-base58
+>pip3 install pytest pytest-html allure-pytest pymongo requests requests-toolbelt websocket-client base58 pytz
+
+>pip3 install websockets asyncio
 
 ## configuration:
 config:
@@ -22,7 +23,10 @@ STRESS_LOOP_INTERVAL = 2 -- set the loop interval time between every B->R->S pos
 
 
 ## how to run:
-1. python ws_server.py
-2. python ws_client.py
+> source /home/venv**/bin/activate
+
+> bash start_server.sh  # start ws server
+
+> bash start_client.sh n  # start ws client. n is client number
 
 
