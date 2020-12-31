@@ -12,6 +12,7 @@ import json
 from datetime import datetime
 from Common import log
 from Stress.Data import gen
+from Stress.Data import data
 from Stress.Conf import config
 from Stress.Common import consts
 
@@ -161,8 +162,8 @@ async def main_logic(ws, path):
 
 def main():
     # clear mongo database
-    # mg = data.MongoDataBase()
-    # mg.clear_mongo_database()
+    mg = data.MongoDataBase()
+    mg.clear_mongo_database()
 
     # start websocket server
     start_server = websockets.serve(main_logic, config.IP, config.PORT)

@@ -1,4 +1,5 @@
 process_nu=${1}
+source $(cd /home/venv*/bin/ && pwd && cd - &> /dev/null)/activate
 export PYTHONPATH=/home/fangchao/xjrw_chain_dashboard
 
 mkdir -p tmp
