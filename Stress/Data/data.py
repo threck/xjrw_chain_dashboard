@@ -6,6 +6,7 @@
 
 import sys
 import copy
+import base64
 import random
 from Config import config as c
 from Common import mongo
@@ -55,10 +56,16 @@ class Data(object):
         return counter
 
     def _gen_hash(self):
-        return '0x%s%s%059d' % (self.data['type'], self.data['chainKey'], self._count())
+        data = random.uniform(100, 200)
+        encode_data = base64.encodebytes(str(data).encode('utf-8'))
+        # return '0x%s%s%059d' % (self.data['type'], self.data['chainKey'], self._count())
+        return '0x%s' % encode_data.decode().replace("\n", "")
 
     def _gen_wallet(self):
-        return '0xwallet%058d' % self._wallet_count()
+        data = random.uniform(0, 20)
+        encode_data = base64.encodebytes(str(data).encode('utf-8'))
+        # return '0xwallet%058d' % self._wallet_count()
+        return '0x%s' % encode_data.decode().replace("\n", "")
 
     def _gen_ss_trans_nu_list(self):
         ss_trans_nu_list = []
@@ -76,7 +83,7 @@ class Data(object):
         t_hash = self._gen_hash()
         t_from = self._gen_wallet()
         t_to = self._gen_wallet()
-        t_amount = 1
+        t_amount = random.uniform(0, 10)
         return {'hash': t_hash, 'from': t_from, 'to': t_to, 'amount': t_amount}
 
     def _gen_ss_detail(self, trans_nu):

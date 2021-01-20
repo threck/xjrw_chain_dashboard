@@ -14,7 +14,8 @@
 >deactivate
 
 ## not needed
-pip install PyYaml faker
+>pip3 install PyYaml faker
 
 ### how to run pytest cases with marks
-pytest -m http  # run cases that marked as [http]
+>pytest -m http  # run cases that marked as [http]
+

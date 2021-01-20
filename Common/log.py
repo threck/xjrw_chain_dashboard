@@ -9,7 +9,7 @@ import logging
 from . import common
 from . import consts
 
-level = 'info'
+level = 'debug'
 LEVEL = dict(info=logging.INFO,
               warning=logging.WARNING,
               error=logging.ERROR,

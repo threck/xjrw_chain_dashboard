@@ -162,8 +162,8 @@ async def main_logic(ws, path):
 
 def main():
     # clear mongo database
-    mg = data.MongoDataBase()
-    mg.clear_mongo_database()
+    # mg = data.MongoDataBase()
+    # mg.clear_mongo_database()
 
     # start websocket server
     start_server = websockets.serve(main_logic, config.IP, config.PORT)

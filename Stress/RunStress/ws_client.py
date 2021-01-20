@@ -9,7 +9,8 @@ import threading
 import websockets
 import json
 import time
-import sys
+import base64
+import random
 from multiprocessing import Pool
 from Common import mrequest
 from Common import log
@@ -20,8 +21,8 @@ from Stress.Data import templates
 from Stress.HttpRequest import post
 
 logger = log.Log()
-B_NODE = int(sys.argv[1])
-# B_NODE = 1
+# B_NODE = int(sys.argv[1])
+B_NODE = 1
 print(f"b node number:{B_NODE}")
 print(f"b node number:{type(B_NODE)}")
 uri = 'ws://%s:%s' % (config.IP, config.PORT)
@@ -47,7 +48,8 @@ S_UP_STREAM = []
 def create_r_chain(r_chain_key):
     for i in range(len(r_chain_key)):
         x = r_chain_key[i]
-        nodeId_r = '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfoBf00r%s' % x
+        nodeid_tmp = base64.encodebytes(str(random.uniform(0, 20)).encode('utf-8')).decode().replace("\n", "")
+        nodeId_r = '%s00r%s' % (nodeid_tmp, x)
         da_r = data.Data('R', x, nodeId_r)
         R_CHAINS.append(da_r)
 
@@ -55,7 +57,8 @@ def create_r_chain(r_chain_key):
 def create_s_chain(s_chain_key):
     for i in range(len(s_chain_key)):
         x = s_chain_key[i]
-        nodeId_s = '12D3KooWGKa86zkRz11uFp7kja4FujbQYnTt7qZQQMGfo00s%s' % x
+        nodeid_tmp = base64.encodebytes(str(random.uniform(0, 20)).encode('utf-8')).decode().replace("\n", "")
+        nodeId_s = '%s00s%s' % (nodeid_tmp, x)
         da_s = data.Data('S', x, nodeId_s)
         S_CHAINS.append(da_s)
 
@@ -65,7 +68,7 @@ def gen_data_shard_chain(lock_hash_r, chain_keys_r, chain_keys_s, chain_key_s):
         for lock_ha in lock_hash_r:
             if lock_ha['chainkey'] == data.data['chainKey'][:2]:
                 data.gen_data([lock_ha], chain_keys_r, chain_keys_s, chain_key_s)
-                logger.info(f'Automatically generate post data:\n{data.data}')
+                logger.debug(f'Automatically generate post data:\n{data.data}')
                 # every shard chain has one relay chain only. so do continue.
                 continue
 

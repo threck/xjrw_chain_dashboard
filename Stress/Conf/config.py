@@ -7,9 +7,9 @@
 #####################
 # Server info
 #####################
-IP = "192.168.1.16"
+IP = "192.168.1.15"
 # IP = "172.16.8.109"
-PORT = 9678
+PORT = 8678
 # POST_URL = 'http://172.70.16.105:8899/api/v1.0/block'
 POST_URL = 'http://127.0.0.1:8888/api/v1.0/block'
 # POST_URL = 'http://172.16.8.105:8888/api/v1.0/block'
@@ -21,9 +21,9 @@ CPU_NUMBER = 32
 #####################
 # Chain info
 #####################
-CHAIN_NU_TOTAL = {"R": 32, "S": 1024}
-CHAIN_NU_LOCAL = {"R": 8, "S": 256}
-SS_TRADE_NU = 600
+CHAIN_NU_TOTAL = {"R": 4, "S": 16}
+CHAIN_NU_LOCAL = {"R": 4, "S": 16}
+SS_TRADE_NU = 5
 
 #####################
 # Chain post request status mark
@@ -42,4 +42,4 @@ S_START_MARK = 's_start'
 # if you want to run forever, you should set the value to 0
 STRESS_LOOP_TIME = 0
 # set the loop interval time between every B->R->S post send cycle.
-STRESS_LOOP_INTERVAL = 15
+STRESS_LOOP_INTERVAL = 2
